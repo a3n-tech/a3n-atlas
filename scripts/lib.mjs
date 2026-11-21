@@ -5,7 +5,7 @@ import { join } from "node:path";
 import { homedir } from "node:os";
 
 export function sh(cmd, args, opts = {}) {
-  return execFileSync(cmd, args, { encoding: "utf8", stdio: ["pipe", "pipe", "pipe"], ...opts }).trim();
+  return execFileSync(cmd, args, { encoding: "utf8", stdio: ["pipe", "pipe", "pipe"], maxBuffer: 64 * 1024 * 1024, ...opts }).trim();
 }
 export function trySh(cmd, args, opts = {}) {
   try { return sh(cmd, args, opts); } catch { return null; }
@@ -23,6 +23,7 @@ const SECRET_RES = [
   /\bAKIA[0-9A-Z]{16}\b/, /\bxox[abpors]-[A-Za-z0-9-]{10,}/, /-----BEGIN [A-Z ]*PRIVATE KEY-----/,
   /\bAIza[0-9A-Za-z_-]{35}\b/, /\b(?:password|passwd|secret|api[_-]?key|token)\s*[:=]\s*["']?[^\s"']{8,}/i,
 ];
+export const SECRET_FILE_RE = /(^|\/)(\.env(\..*)?|.*\.(pem|key|p12|pfx|jks|keystore)|id_(rsa|ed25519|ecdsa)|credentials(\.json)?|\.npmrc|\.netrc)$/i;
 export const hasSecret = (text) => SECRET_RES.some((r) => r.test(text || ""));
 export const redact = (text) =>
   SECRET_RES.reduce((t, r) => t.replace(new RegExp(r.source, r.flags.includes("g") ? r.flags : r.flags + "g"), "****"), text || "");

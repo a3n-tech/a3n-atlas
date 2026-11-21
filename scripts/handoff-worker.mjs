@@ -4,7 +4,7 @@
 // Never touches the default branch's history.
 import { readFileSync, writeFileSync, existsSync, mkdirSync, rmSync, statSync } from "node:fs";
 import { join } from "node:path";
-import { sh, trySh, issueFromBranch, hasSecret, redact, claude, log, HANDOFF_MARK, isHarnessRepo } from "./lib.mjs";
+import { sh, trySh, issueFromBranch, hasSecret, redact, claude, log, HANDOFF_MARK, isHarnessRepo, SECRET_FILE_RE } from "./lib.mjs";
 
 const payloadFile = process.argv[2];
 let input;
@@ -71,17 +71,32 @@ Diff stat:\n${diffStat}\n\nTRANSCRIPT:\n${transcript}`);
     return log(`handoff: journal only (${branch})`);
   }
 
+  // Outward actions (push, PR, comment) only for private/internal repos: a WIP diff or a
+  // session summary must never land somewhere public.
+  const visibility = trySh("gh", ["repo", "view", "--json", "visibility", "-q", ".visibility"], { cwd: root });
+  if (visibility !== "PRIVATE" && visibility !== "INTERNAL") {
+    return log(`handoff: repo visibility ${visibility ?? "unknown"} — kept local (journal only), no push/PR/comment`);
+  }
+
   // WIP commit, but only if nothing in the change looks like a secret.
   const notes = [];
   const dirty = tryGit("status", "--porcelain");
   if (dirty) {
     tryGit("add", "-A", "--intent-to-add");
-    const diff = tryGit("diff", "HEAD") || "";
-    const leaked = hasSecret(diff);
-    if (leaked) {
+    // Fail closed: an unreadable diff, a binary, or a credential-shaped filename holds everything back.
+    const diff = tryGit("diff", "HEAD");
+    const numstat = tryGit("diff", "HEAD", "--numstat");
+    const files = (numstat || "").split("\n").filter(Boolean).map((l) => l.split("\t"));
+    const reason =
+      diff === null || numstat === null ? "the diff could not be read"
+      : hasSecret(diff) ? "the diff matched a secret pattern"
+      : files.some(([a]) => a === "-") ? "it includes binary files the secret scan cannot read"
+      : files.some(([, , f]) => SECRET_FILE_RE.test(f)) ? "it includes a credential-shaped file (.env, key, pem…)"
+      : null;
+    if (reason) {
       tryGit("reset", "-q");
       if (journalPath) { tryGit("add", journalPath); tryGit("commit", "-m", `docs(journal): session notes (#${issue})`, "--", journalPath); }
-      notes.push("⚠️ Uncommitted changes were **held back on the author's machine**: the diff matched a secret pattern. The author must remove the secret, then commit.");
+      notes.push(`⚠️ Uncommitted changes were **held back on the author's machine**: ${reason}. The author must review and commit them.`);
     } else {
       git("add", "-A");
       git("commit", "-m", `wip(#${issue}): session handoff`);

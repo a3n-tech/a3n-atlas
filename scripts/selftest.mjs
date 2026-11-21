@@ -24,4 +24,7 @@ const d = mkdtempSync(join(tmpdir(), "hx-"));
 assert.ok(!isHarnessRepo(d));
 writeFileSync(join(d, "CLAUDE.md"), "x\n<!-- harness:team-rules:start — managed -->\n");
 assert.ok(isHarnessRepo(d));
+import { SECRET_FILE_RE } from "./lib.mjs";
+for (const f of [".env", "app/.env.local", "certs/server.pem", "id_rsa", "credentials.json", ".npmrc"]) assert.ok(SECRET_FILE_RE.test(f), f);
+for (const f of ["src/env.ts", "keyboard.tsx", "docs/credentials-guide.md", "README.md"]) assert.ok(!SECRET_FILE_RE.test(f), f);
 console.log("gate ok");
