@@ -41,3 +41,9 @@ assert.deepEqual(readRoles(rf2), ["frontend", "qa", "backend"]);
 assert.deepEqual(readRoles(join(d, "missing")), []);
 for (const r of ROLES) assert.ok(ex(new URL(`../roles/${r}.md`, import.meta.url)), `lens ${r}`);
 console.log("roles ok");
+import { mkdirSync as mk } from "node:fs";
+process.env.HARNESS_CONFIG_DIR = d; mk(join(d, "lenses"), { recursive: true });
+writeFileSync(join(d, "lenses", "lead.md"), "# lead");
+writeFileSync(rf2, "lead ../etc/passwd ghost frontend");
+assert.deepEqual(readRoles(rf2), ["lead", "frontend"]);   // personal lens kept, traversal + unknown dropped
+console.log("personal lens ok");

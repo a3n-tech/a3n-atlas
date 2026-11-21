@@ -3,7 +3,7 @@
 import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
-import { trySh, issueFromBranch, readStdinJson, HANDOFF_MARK, log, isHarnessRepo, readRoles, rolesFile } from "./lib.mjs";
+import { trySh, issueFromBranch, readStdinJson, HANDOFF_MARK, log, isHarnessRepo, readRoles, rolesFile, ROLES, personalLens } from "./lib.mjs";
 
 if (process.env.HARNESS_CHILD) process.exit(0);
 const input = await readStdinJson();
@@ -70,7 +70,7 @@ const roles = readRoles();
 if (roles.length) {
   const lensDir = join(dirname(fileURLToPath(import.meta.url)), "..", "roles");
   out.push(`## Your role: ${roles.join(" + ")}\nWork through this angle of attack. The plan stays shared; roles change ` +
-    "focus and tools, not the plan.\n\n" + roles.map((r) => readFileSync(join(lensDir, `${r}.md`), "utf8")).join("\n"));
+    "focus and tools, not the plan.\n\n" + roles.map((r) => readFileSync(ROLES.includes(r) ? join(lensDir, `${r}.md`) : personalLens(r), "utf8")).join("\n"));
 } else {
   out.push(`## No role set\nAsk the person once which role(s) they hold, then run /harness:role (writes ${rolesFile()}).`);
 }

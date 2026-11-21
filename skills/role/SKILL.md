@@ -38,4 +38,11 @@ for r in pmo pm architect frontend backend fullstack devops release qa; do
 done
 ```
 
+## Personal lens (private)
+
+A role that isn't one of the nine (e.g. a leadership role) can be a **personal lens**: write it to
+`~/.config/a3n-harness/lenses/<name>.md` (`<name>` = lowercase letters, digits, `-`) and add `<name>` to the
+roles file. It loads only on that machine and is never committed or shown to anyone else. Use the
+team lens format (angle of attack, pick up, reach for first, always).
+
 Never write roles into the repo, a commit or an issue — they're personal settings.

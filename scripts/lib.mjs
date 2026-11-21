@@ -1,6 +1,6 @@
 // Shared helpers for the harness hooks. No dependencies: node + git + gh + claude.
 import { execFileSync } from "node:child_process";
-import { appendFileSync, mkdirSync, readFileSync } from "node:fs";
+import { appendFileSync, mkdirSync, readFileSync, existsSync } from "node:fs";
 import { join } from "node:path";
 import { homedir } from "node:os";
 
@@ -59,12 +59,16 @@ export function repoFromUrl(url) {
 }
 
 export const ROLES = ["pmo", "pm", "architect", "frontend", "backend", "fullstack", "devops", "release", "qa"];
-export const rolesFile = () => join(process.env.HARNESS_CONFIG_DIR || join(homedir(), ".config", "a3n-harness"), "roles");
+export const configDir = () => process.env.HARNESS_CONFIG_DIR || join(homedir(), ".config", "a3n-harness");
+export const rolesFile = () => join(configDir(), "roles");
+/** Personal lenses live only on that person's machine: <config>/lenses/<name>.md. */
+export const personalLens = (name) => join(configDir(), "lenses", `${name}.md`);
 
-/** This person's roles (per machine, never committed). Unknown names are dropped. */
+/** This person's roles (per machine, never committed). Team roles, or a personal lens that exists
+ *  on this machine; anything else is dropped. Names are [a-z0-9-] only, so no path tricks. */
 export function readRoles(file = rolesFile()) {
   try {
     return [...new Set(readFileSync(file, "utf8").split(/[\s,]+/).map((r) => r.trim().toLowerCase())
-      .filter((r) => ROLES.includes(r)))];
+      .filter((r) => /^[a-z0-9-]{1,32}$/.test(r) && (ROLES.includes(r) || existsSync(personalLens(r)))))];
   } catch { return []; }
 }
