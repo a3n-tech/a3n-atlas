@@ -66,12 +66,14 @@ grep -n '"/Users/\|"/home/' .claude/settings.json && echo "STOP: absolute path l
 ```
 
 The graph is **shared**: `graphify-out/` is committed (remove any bare `graphify-out/` line
-from `.gitignore`), except machine-local files — ensure `.gitignore` has:
+from `.gitignore`), except machine-local files and the HTML viewer (it renders labels from repo content
+unescaped — a stored-XSS risk if shared) — ensure `.gitignore` has:
 
 ```
 graphify-out/cache/
 graphify-out/.graphify_build_state.json
 graphify-out/.graphify_labels.pending.json
+graphify-out/graph.html
 ```
  Copy `${CLAUDE_SKILL_DIR}/ci/graphify-refresh.yml` to
 `.github/workflows/` so `main` keeps a fresh graph even when a teammate commits without graphify
