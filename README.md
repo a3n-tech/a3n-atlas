@@ -17,15 +17,23 @@ Team harness for Claude Code. One contract for how we plan and build:
 Repos already on the harness commit `.claude/settings.json` that registers this marketplace,
 so Claude Code prompts you to install it when you open the repo and trust the folder.
 
-Also needed on your machine: `gh` logged in (`gh auth login`), Node 18+.
+Also needed on your machine: `gh` logged in (`gh auth login`), Node 18+, `uv` or `pipx` (for graphify).
+
+## Token savers
+
+| Tool | Saves tokens by | Off switch |
+|---|---|---|
+| `caveman` | terse replies, no filler | "stop caveman" / "normal mode" |
+| `ponytail` | smallest working diff, no speculative code | "stop ponytail" |
+| `graphify` | answering codebase questions from `graphify-out/` instead of re-reading files | don't run `/graphify` |
 
 ## Onboard a repo
 
 In the repo, run `/harness:setup`. It:
 
 1. checks git + `gh`,
-2. installs PAUL (`npx paul-framework@1.4.0 --global`) if missing,
-3. pins `harness`, `mattpocock-skills`, `superpowers` in `.claude/settings.json`,
+2. installs PAUL (`npx paul-framework@1.4.0 --global`) and graphify (`graphifyy==0.9.108`) if missing,
+3. pins `harness`, `mattpocock-skills`, `superpowers`, `ponytail`, `caveman` in `.claude/settings.json`,
 4. writes the team rules into `CLAUDE.md` between `harness:team-rules` markers,
 5. walks you through `/paul:init` → `/mattpocock-skills:setup-matt-pocock-skills` (you type
    this one; agents can't) → `/harness:seam`.

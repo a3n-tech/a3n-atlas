@@ -1,6 +1,6 @@
 ---
 name: setup
-description: Bootstrap the a3n-tech team harness in the current repo — checks git/gh, installs PAUL, pins the team plugins in .claude/settings.json, writes the team rules into CLAUDE.md, then hands off to /paul:init, /setup-matt-pocock-skills and /harness:seam. Use when someone says "set up the harness", "initialize our harness", "onboard this repo", or opens a repo that has no .paul/ or no team rules yet.
+description: Bootstrap the a3n-tech team harness in the current repo — checks git/gh, installs PAUL and graphify, pins the team plugins in .claude/settings.json, writes the team rules into CLAUDE.md, then hands off to /paul:init, /setup-matt-pocock-skills and /harness:seam. Use when someone says "set up the harness", "initialize our harness", "onboard this repo", or opens a repo that has no .paul/ or no team rules yet.
 ---
 
 # Harness setup
@@ -37,6 +37,22 @@ npx -y paul-framework@1.4.0 --global
 PAUL commands load on the next session. If you just installed it, say so: the person must
 restart Claude Code before `/paul:*` works.
 
+### Graphify (token saver — query a code graph instead of re-reading files)
+
+```bash
+which graphify && ls ~/.claude/skills/graphify/SKILL.md 2>/dev/null
+```
+
+Missing → tell the person it installs a Python CLI and a global skill, then run (prefer `uv`, fall back to `pipx`):
+
+```bash
+uv tool install graphifyy==0.9.108 || pipx install graphifyy==0.9.108
+graphify install --platform claude
+```
+
+Building the graph (`/graphify`) costs tokens once; later questions read `graphify-out/` instead
+of the source tree. Add `graphify-out/` to `.gitignore` unless the team agrees to commit it.
+
 ## 3. Pin the team plugins (repo-level, committed)
 
 Merge `${CLAUDE_SKILL_DIR}/project-settings.json` into `.claude/settings.json`:
@@ -46,7 +62,8 @@ Merge `${CLAUDE_SKILL_DIR}/project-settings.json` into `.claude/settings.json`:
   `enabledPlugins`. Never drop or change existing keys. Keep formatting.
 
 This is what distributes the harness: anyone who opens the repo and trusts the folder is
-prompted to install `harness@a3n-tech`, `mattpocock-skills` and `superpowers`.
+prompted to install `harness@a3n-tech`, `mattpocock-skills`, `superpowers`, and the token savers
+`ponytail` (smallest working change) and `caveman` (terse output).
 
 Never write to `.claude/settings.local.json` — that is personal and not committed.
 
