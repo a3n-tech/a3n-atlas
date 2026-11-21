@@ -1,0 +1,75 @@
+name: brain-sync
+
+# Obsidian users edit the vault on a personal `brain/<name>` branch (Obsidian Git plugin
+# auto-commits and pushes). This workflow merges those pushes into main automatically, but ONLY
+# when every change is inside brain/ (and not in the generated mirrors), and fans main back out
+# to every brain/* branch so everyone sees each other's notes.
+on:
+  push:
+    branches: ["brain/**", main]
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: brain-sync-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  merge-notes:
+    if: startsWith(github.ref, 'refs/heads/brain/')
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      BRANCH: ${{ github.ref_name }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Only brain/ notes may auto-merge
+        run: |
+          git fetch origin main
+          files=$(git diff --name-only origin/main...HEAD)
+          [ -z "$files" ] && { echo "nothing to merge"; exit 0; }
+          bad=$(echo "$files" | grep -vE '^brain/' || true)
+          gen=$(echo "$files" | grep -E '^brain/(plan|tickets)/' || true)
+          if [ -n "$bad" ]; then echo "::error::Changes outside brain/ need a normal reviewed PR:"; echo "$bad"; exit 1; fi
+          if [ -n "$gen" ]; then echo "::error::brain/plan and brain/tickets are generated mirrors; edit .paul/ or GitHub instead:"; echo "$gen"; exit 1; fi
+          if git diff origin/main...HEAD | grep -qE '^\+.*(gh[pousr]_[A-Za-z0-9]{20,}|github_pat_|sk_(live|test)_[A-Za-z0-9]{10,}|sk-[A-Za-z0-9]{20,}|AKIA[0-9A-Z]{16}|-----BEGIN [A-Z ]*PRIVATE KEY|xox[abpors]-)'; then
+            echo "::error::A note looks like it contains a secret. Remove it (store secrets in the password manager) and push again."; exit 1
+          fi
+      - name: Open or update PR and merge
+        run: |
+          [ -z "$(git diff --name-only origin/main...HEAD)" ] && exit 0
+          pr=$(gh pr list --head "$BRANCH" --state open --json number -q '.[0].number')
+          if [ -z "$pr" ]; then
+            gh pr create --base main --head "$BRANCH" --title "brain: notes from $BRANCH" \
+              --body "Automatic merge of Obsidian notes (brain/ only). Checked: no files outside brain/, no generated mirrors, no secret patterns."
+          fi
+          gh pr merge "$BRANCH" --merge
+      - name: Bring the branch up to date with main
+        run: |
+          git fetch origin main "$BRANCH"
+          git checkout -B "$BRANCH" "origin/$BRANCH"
+          git -c user.name="brain-bot" -c user.email="brain-bot@users.noreply.github.com" merge --no-edit origin/main
+          git push origin "$BRANCH"
+
+  fan-out:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Merge main into every brain/* branch
+        run: |
+          for b in $(git branch -r --format='%(refname:short)' | grep '^origin/brain/' | sed 's#^origin/##'); do
+            git checkout -q -B "$b" "origin/$b"
+            if git -c user.name="brain-bot" -c user.email="brain-bot@users.noreply.github.com" merge --no-edit origin/main; then
+              git push -q origin "$b" || echo "::warning::push failed for $b"
+            else
+              git merge --abort
+              echo "::warning::$b conflicts with main — next Claude session on that branch runs /harness:sync"
+            fi
+          done

@@ -47,7 +47,7 @@ Commit the result so the rest of the team gets it.
 | `.paul/STATE.md` edited by two people | `paul-ai` git merge driver asks Claude to merge both sides; leftovers → `/harness:sync`; `check:plan` fails on markers |
 | Someone stops mid-ticket | SessionEnd → WIP commit (secret-scanned), push, draft PR, AI handoff comment on the issue; SessionStart loads it for the next person |
 | Code graph per person | `graphify-out/` committed; graphify git hooks + `graph.json` merge driver; CI refreshes on `main` |
-| Personal memory doesn't sync | SessionEnd writes AI-extracted decisions/gotchas to `.paul/journal/` (one file per session, no conflicts) |
+| Personal memory doesn't sync | Project brain (`brain/`, Obsidian vault in each repo) is the shared context source of truth; SessionEnd writes AI-extracted decisions/gotchas to `brain/journal/` |
 
 Logs: `~/.claude/plugins/data/<harness>/harness.log`. Self-test: `node scripts/selftest.mjs`.
 
@@ -75,6 +75,7 @@ repo to refresh its `CLAUDE.md` rules block.
 | `skills/setup/` | `/harness:setup` — bootstrap a repo |
 | `skills/seam/` | `/harness:seam` — Execution Seam + drift checker |
 | `skills/sync/` | `/harness:sync` — AI conflict resolution |
+| `skills/brain/` | `/harness:brain` — per-repo Obsidian vault, plan/ticket mirrors, brain-only auto-merge CI |
 | `hooks/hooks.json`, `scripts/` | SessionStart/SessionEnd automation, AI merge driver |
 | `skills/seam/scripts/check-plan-drift.mjs` | the checker (read-only, needs `gh`) |
 | `skills/setup/team-rules.md` | team rules block for `CLAUDE.md` |

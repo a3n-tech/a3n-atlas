@@ -1,0 +1,12 @@
+{
+  "commitMessage": "brain: {{date}} notes",
+  "autoCommitMessage": "brain: {{date}} notes",
+  "autoSaveInterval": 5,
+  "autoPushInterval": 5,
+  "autoPullInterval": 5,
+  "autoPullOnBoot": true,
+  "pullBeforePush": true,
+  "syncMethod": "merge",
+  "disablePush": false,
+  "showStatusBar": true
+}

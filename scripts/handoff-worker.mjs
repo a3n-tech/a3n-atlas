@@ -54,12 +54,13 @@ Diff stat:\n${diffStat}\n\nTRANSCRIPT:\n${transcript}`);
 
   // Journal: one file per session, so concurrent teammates never conflict on it.
   let journalPath = null;
-  if (journal.trim() && existsSync(join(root, ".paul"))) {
-    const dir = join(root, ".paul", "journal");
+  const brainJournal = existsSync(join(root, "brain")) ? join(root, "brain", "journal") : null;
+  if (journal.trim() && (brainJournal || existsSync(join(root, ".paul")))) {
+    const dir = brainJournal || join(root, ".paul", "journal");
     mkdirSync(dir, { recursive: true });
     const slug = String(json.title || "session").replace(/[^a-z0-9-]/gi, "").slice(0, 40) || "session";
     journalPath = join(dir, `${new Date().toISOString().slice(0, 10)}-${slug}-${String(input.session_id || "").slice(0, 8)}.md`);
-    writeFileSync(journalPath, `---\nauthor: ${author}\nbranch: ${branch}\n${issue ? `issue: ${issue}\n` : ""}date: ${new Date().toISOString()}\n---\n\n${journal}\n`);
+    writeFileSync(journalPath, `---\ntype: journal\nauthor: ${author}\nbranch: ${branch}\n${issue ? `issue: ${issue}\n` : ""}date: ${new Date().toISOString()}\n---\n\n${journal}\n`);
   }
 
   if (!issue) {

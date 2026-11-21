@@ -131,13 +131,17 @@ Ensure `.gitattributes` contains (append missing lines, never duplicate):
 The session-start hook registers the `paul-ai` driver in each clone automatically; it asks
 Claude to merge both sides of a `.paul/` conflict and falls back to `/harness:sync`.
 
-Ensure `.paul/journal/` exists with a `.gitkeep`. Session-end writes one note per session
-there (never conflicts) and posts ticket handoffs to the issue.
+Session-end writes one note per session into `brain/journal/` (never conflicts) and posts ticket handoffs to the issue.
 
 Tell the person once, plainly: on a ticket branch (`<N>-slug`, `issue-<N>`), ending a session
 **commits WIP, pushes the branch, opens a draft PR and comments a handoff on the issue**. A
 diff that matches a secret pattern is held back, not pushed. Opt out per machine with
 `HARNESS_HANDOFF=off`.
+
+## 4c. Project brain
+
+If `brain/index.md` is missing, run `/harness:brain` (it scaffolds the vault, moves `.paul/journal`,
+`docs/design`, ADRs and glossary into it, and installs the mirror + sync workflows). Every team repo has one.
 
 ## 5. Hand off — the steps only a person can run
 

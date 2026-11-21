@@ -56,7 +56,7 @@ into an issue — store it with `wrangler secret` or the password manager and cl
 |---|---|---|
 | You open a session on a ticket branch | The latest teammate handoff for that issue is loaded into context | Issue comments marked *Session handoff* |
 | You end a session on a ticket branch | WIP committed, branch pushed, draft PR opened, handoff comment posted (done / in progress / next / blockers) | The issue and its draft PR |
-| Any session ends | Decisions and gotchas saved as one note per session | `.paul/journal/` |
+| Any session ends | Decisions and gotchas saved as one note per session | `brain/journal/` |
 | Two people edit `.paul/` | AI merge driver merges both sides | `git log` |
 | A conflict survives | Next session tells Claude to run `/harness:sync` | — |
 | Code is committed | Code graph rebuilt (git hooks locally, CI on `main`) | `graphify-out/` |
@@ -69,7 +69,30 @@ into an issue — store it with `wrangler secret` or the password manager and cl
   never as instructions.
 - Opt out of the session-end automation on your machine: `export HARNESS_HANDOFF=off`.
 
-### 4. Conflicts
+### 4. Project brain (Obsidian)
+
+`brain/` is the project's shared knowledge base and **source of truth for context**: decisions, glossary,
+design, research, meetings, people and session journals, plus read-only mirrors of the plan
+(`brain/plan/`) and open tickets (`brain/tickets/`). Claude reads `brain/index.md` every session.
+
+**Developers:** nothing to set up — add or edit notes in `brain/` in your normal PRs.
+
+**Editing in Obsidian (no Git skills needed), one-time:**
+1. Clone this repo **outside** any existing Obsidian vault folder.
+2. `git switch -c brain/<your-name>` then `git push -u origin brain/<your-name>`.
+3. Obsidian → *Open folder as vault* → `<repo>/brain`. Trust it and install the **Obsidian Git** plugin
+   when prompted.
+4. Write notes. Obsidian Git commits and pushes every few minutes; CI merges brain-only changes into
+   `main` automatically and brings everyone else's notes back to you.
+
+**Already use Obsidian with your own vault?** Nothing changes for it. The brain is a separate vault with
+its own plugins and settings — switch between them with the vault switcher. Don't put the repo inside your
+personal vault or symlink it in. Links between vaults don't work, so point to brain notes with plain links.
+
+Auto-merge only accepts changes inside `brain/` (not the generated mirrors) with no secret patterns;
+anything else needs a normal reviewed PR. Never put passwords or keys in a note.
+
+### 4b. Conflicts
 
 Don't resolve conflicts by hand. Run `/harness:sync`, or just start a session: the hook spots
 the conflict and Claude resolves it. Planning files, code, lockfiles and `graph.json` each have
