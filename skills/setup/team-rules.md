@@ -37,8 +37,10 @@ unit of execution.
 3. **One spec.** PAUL's milestones are the spec — skip `/to-spec`.
 4. **One build loop.** A phase built through `/implement` is never also `/paul:apply`'d.
 5. **Don't re-grill settled work.** `/grill-with-docs` is for new ideas, before the roadmap.
-6. **Owner-only work is never a ticket.** Credentials, dashboards, DNS, rates to confirm live in
-   the go-live doc and `/wizard`.
+6. **Human-only work is a `ready-for-human` issue, never `ready-for-agent`.** Credentials, API keys,
+   accounts, DNS, registrations, approvals, legal sign-off: one issue each, assigned to the person who owns
+   it. Agents never pick these up or close them; a phase they block is not complete while they are open.
+   Secrets go into `wrangler secret` / the password manager — never into the issue, a comment or the repo.
 
 Full contract: `.paul/SPECIAL-FLOWS.md` → "Execution Seam". Drift check: `npm run check:plan`
 (or `node scripts/check-plan-drift.mjs`).

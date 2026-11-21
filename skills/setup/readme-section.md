@@ -46,6 +46,10 @@ npm run check:plan            before merging anything touching .paul/ or closing
 **Branch names matter.** Start every ticket branch with the issue number (`12-hero-section`,
 `issue-12`, `feat/12-hero`). That's how the hooks find the ticket. Never commit to `main`.
 
+**Human-only tasks** (API keys, accounts, DNS, registrations, approvals) are GitHub issues labelled
+`ready-for-human`, assigned to whoever owns them. Agents only take `ready-for-agent`. Never paste a secret
+into an issue — store it with `wrangler secret` or the password manager and close the issue with "done".
+
 ### 3. What happens automatically
 
 | When | What | Where to look |

@@ -39,9 +39,10 @@ The **phase is the unit of record**; the **issue is the unit of execution**.
    decisions. Use it for a *new* idea, before it enters the roadmap.
 5. **One build loop.** If a phase is being built through `/implement`, do not also run
    `/paul:apply` on it. Two implementers, one working tree.
-6. **Owner tasks are not tickets.** Anything only the owner can close — credentials,
-   dashboards, DNS, a rate someone must confirm — stays in `{{OWNER_DOC}}` and `/wizard`.
-   Filing it as an issue creates work no agent can ever finish.
+6. **Human-only work is labelled `ready-for-human`.** Anything only a person can finish — credentials,
+   API keys, accounts, DNS, registrations, a rate someone must confirm — is an issue labelled
+   `ready-for-human` and assigned to that person, never `ready-for-agent`. `{{OWNER_DOC}}` links those
+   issues (link, never restate). Secrets never go in an issue.
 
 ### Current mapping
 

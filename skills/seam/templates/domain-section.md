@@ -13,8 +13,9 @@ change what you do:
 - **Do not `/grill-with-docs` work PAUL already scoped.** That re-opens a settled decision. Use
   it for a new idea, before it enters the roadmap.
 - **State follows the tracker.** Never mark a phase complete while a linked issue is open.
-- **Owner-only work is not a ticket.** Credentials, dashboards, DNS, a rate someone must
-  confirm — those live in `{{OWNER_DOC}}` and `/wizard`, never as an issue an agent cannot close.
+- **Human-only work is `ready-for-human`.** Credentials, API keys, accounts, DNS, a rate someone
+  must confirm — those are `ready-for-human` issues (linked from `{{OWNER_DOC}}`). Never pick them up,
+  never relabel them `ready-for-agent`, never put a secret in one.
 - **Where decisions live.** If this repo has no `docs/adr/`, the dated entries in
   `.paul/STATE.md` are the decision record. Surface contradictions with them; do not silently
   override.

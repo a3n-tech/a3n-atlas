@@ -69,7 +69,7 @@ list those issues for the user as "possibly Phase X?" and leave them unmapped.
 **Never fabricate issue numbers.**
 
 Rows: one per unit with linked issues (`| Phase 2 Checkout | #14 – #19 |`), then **always** a
-final owner row: `| Owner-only work ({{OWNER_DOC}}) | none — /wizard, not issues |`. If no
+final owner row: `| Human-only setup ({{OWNER_DOC}}) | <ready-for-human issue numbers, or none yet> |`. If no
 unit has issues yet, the owner row follows a single `| (none yet) | — |`.
 
 Add an Amendment History row: `| <today> | Execution Seam added | PAUL + mattpocock setup |`.
@@ -175,5 +175,5 @@ Do not commit unless asked; if asked, one commit, message
 ## Don'ts
 
 - Don't run `/to-spec` or `/grill-with-docs` on anything already in `MILESTONES.md`.
-- Don't file owner-only work as issues to "fill" the mapping.
+- File human-only work as `ready-for-human` issues (one per account/credential/registration/decision), never `ready-for-agent`; never write a secret into one.
 - Don't copy another project's content (its domain rules, vocabulary, phase table).
