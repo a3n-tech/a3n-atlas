@@ -75,6 +75,7 @@ repo to refresh its `CLAUDE.md` rules block.
 | `skills/setup/` | `/harness:setup` — bootstrap a repo |
 | `skills/seam/` | `/harness:seam` — Execution Seam + drift checker |
 | `skills/sync/` | `/harness:sync` — AI conflict resolution |
+| `skills/role/` | `/harness:role` — per-person SDLC role(s) → role lens at session start (`roles/*.md`) |
 | `skills/brain/` | `/harness:brain` — per-repo Obsidian vault, plan/ticket mirrors, brain-only auto-merge CI |
 | `hooks/hooks.json`, `scripts/` | SessionStart/SessionEnd automation, AI merge driver |
 | `skills/seam/scripts/check-plan-drift.mjs` | the checker (read-only, needs `gh`) |

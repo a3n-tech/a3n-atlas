@@ -29,12 +29,20 @@ work with Claude Code. Source and changelog: [a3n-tech/harness](https://github.c
 4. Run `/harness:setup`. It installs PAUL and graphify on your machine, then checks that this
    repo is wired. **Restart Claude Code** after it installs anything.
 
+### 1b. Set your role (once)
+
+Run `/harness:role` and say what you do (e.g. "frontend", "backend and devops", "QA"). Roles: PMO, PM,
+architect, frontend, backend, full-stack, DevOps, release engineer, QA/STE. Your sessions then focus on
+your role's work and reach for its skills first; your tickets are labelled `role:<you>`. It's stored on your
+machine only (`~/.config/a3n-harness/roles`).
+
 ### 2. Daily workflow
 
 ```
 /paul:resume                  where are we? (reads .paul/STATE.md)
 /paul:plan <phase>            scope + sequence a phase
   └── /to-tickets             phase → GitHub issues with blocking edges
+        └── gh issue list --label ready-for-agent --label role:<you>
         └── git switch -c <issue>-short-name     e.g. 12-hero-section
               /implement       build the ticket (TDD), /clear between tickets
               open PR          "Closes #12"

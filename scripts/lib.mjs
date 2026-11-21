@@ -57,3 +57,14 @@ export function repoFromUrl(url) {
   const m = /^(?:https:\/\/github\.com\/|git@github\.com:|ssh:\/\/git@github\.com\/)([\w.-]+)\/([\w.-]+?)(?:\.git)?\/?$/.exec((url || "").trim());
   return m ? `${m[1]}/${m[2]}` : null;
 }
+
+export const ROLES = ["pmo", "pm", "architect", "frontend", "backend", "fullstack", "devops", "release", "qa"];
+export const rolesFile = () => join(process.env.HARNESS_CONFIG_DIR || join(homedir(), ".config", "a3n-harness"), "roles");
+
+/** This person's roles (per machine, never committed). Unknown names are dropped. */
+export function readRoles(file = rolesFile()) {
+  try {
+    return [...new Set(readFileSync(file, "utf8").split(/[\s,]+/).map((r) => r.trim().toLowerCase())
+      .filter((r) => ROLES.includes(r)))];
+  } catch { return []; }
+}

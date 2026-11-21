@@ -19,6 +19,13 @@
         "url": "https://github.com/JuliusBrussee/caveman.git",
         "ref": "ef6050c5e1848b6880ff47c32ade1a608a64f85e"
       }
+    },
+    "claude-code-skills": {
+      "source": {
+        "source": "github",
+        "repo": "alirezarezvani/claude-skills",
+        "ref": "f8593c4941210a621a6629ce1da9e07897976d5f"
+      }
     }
   },
   "enabledPlugins": {
@@ -26,6 +33,10 @@
     "mattpocock-skills@claude-plugins-official": true,
     "superpowers@claude-plugins-official": true,
     "ponytail@ponytail": true,
-    "caveman@caveman": true
+    "caveman@caveman": true,
+    "engineering-skills@claude-code-skills": true,
+    "engineering-advanced-skills@claude-code-skills": true,
+    "frontend-design@claude-plugins-official": true,
+    "code-review@claude-plugins-official": true
   }
 }

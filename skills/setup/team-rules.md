@@ -45,6 +45,14 @@ unit of execution.
 Full contract: `.paul/SPECIAL-FLOWS.md` → "Execution Seam". Drift check: `npm run check:plan`
 (or `node scripts/check-plan-drift.mjs`).
 
+### Roles — one plan, different angles
+
+- Everyone sets their role(s) once with `/harness:role` (PMO, PM, architect, frontend, backend, full-stack,
+  DevOps, release, QA). The session then loads that role's angle of attack and first-choice skills.
+- Roles change **focus and tools, never the plan**: one shared PAUL plan, one ticket queue.
+- Every ticket carries exactly one `role:<id>` label, applied when `/to-tickets` creates it. Pick up
+  `ready-for-agent` tickets with your role label first.
+
 ### Project brain — the context source of truth
 
 - `brain/` is an Obsidian vault in this repo and the **source of truth for project context**: decisions

@@ -92,7 +92,7 @@ This is what distributes the harness: anyone who opens the repo and trusts the f
 prompted to install `harness@a3n-tech`, `mattpocock-skills`, `superpowers`, and the token savers
 `ponytail` (smallest working change) and `caveman` (terse output).
 
-Third-party marketplaces (ponytail, caveman) are **pinned to reviewed commits** via `ref` (full SHA;
+Third-party marketplaces (ponytail, caveman, claude-code-skills) are **pinned to reviewed commits** via `ref` (full SHA;
 needs Claude Code 2.1.324+). Keep the pins from the template. Bumping a pin is a deliberate PR to
 `a3n-tech/harness`: review the upstream diff of its hooks (network calls, exec, file access) first.
 
@@ -137,6 +137,11 @@ Tell the person once, plainly: on a ticket branch (`<N>-slug`, `issue-<N>`), end
 **commits WIP, pushes the branch, opens a draft PR and comments a handoff on the issue**. A
 diff that matches a secret pattern is held back, not pushed. Opt out per machine with
 `HARNESS_HANDOFF=off`.
+
+## 4b2. Roles
+
+Create the nine `role:<id>` labels (see `/harness:role`, "Tickets by role") if missing. Then ask the person
+which role(s) they hold and run `/harness:role` — roles are per machine, never committed.
 
 ## 4c. Project brain
 

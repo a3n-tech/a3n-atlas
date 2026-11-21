@@ -34,3 +34,10 @@ assert.equal(repoFromUrl("git@github.com:a3n-tech/harness.git"), "a3n-tech/harne
 assert.equal(repoFromUrl("https://gitlab.com/x/y.git"), null);
 assert.equal(repoFromUrl(null), null);
 console.log("repo ok");
+import { readRoles, ROLES } from "./lib.mjs";
+import { readFileSync as rf, existsSync as ex } from "node:fs";
+const rf2 = join(d, "roles"); writeFileSync(rf2, "Frontend, qa\nnope  backend frontend");
+assert.deepEqual(readRoles(rf2), ["frontend", "qa", "backend"]);
+assert.deepEqual(readRoles(join(d, "missing")), []);
+for (const r of ROLES) assert.ok(ex(new URL(`../roles/${r}.md`, import.meta.url)), `lens ${r}`);
+console.log("roles ok");
