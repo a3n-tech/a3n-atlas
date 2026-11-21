@@ -18,6 +18,8 @@ import { join } from "node:path";
 
 const PAUL_DIR = ".paul";
 const LABEL = process.env.PLAN_AGENT_LABEL || "ready-for-agent";
+// Every agent-ready ticket names exactly one role (see docs/agents/triage-labels.md, "Role labels").
+const ROLE_PREFIX = process.env.PLAN_ROLE_PREFIX ?? "role:";
 // Docs outside .paul/ that also map PAUL units to issues (the owner/go-live doc).
 // Override with PLAN_EXTRA_DOCS="docs/A.md,docs/B.md".
 const EXTRA_DOCS = (process.env.PLAN_EXTRA_DOCS || "docs/GO-LIVE.md").split(",").map((s) => s.trim()).filter(Boolean);
@@ -59,7 +61,7 @@ function referencedIssues(docs) {
 
 function openAgentIssues() {
   const raw = sh("gh", ["issue", "list", "--state", "open", "--label", LABEL,
-                        "--limit", "200", "--json", "number,title"]);
+                        "--limit", "200", "--json", "number,title,labels"]);
   return JSON.parse(raw);
 }
 
@@ -116,12 +118,26 @@ for (const [file, text] of docs) {
 }
 
 // Rule 2: open agent-ready work the plan never mentions.
-for (const issue of openAgentIssues()) {
+const agentIssues = openAgentIssues();
+for (const issue of agentIssues) {
   if (!refs.has(issue.number)) {
     problems.push(
       `orphan: issue #${issue.number} "${issue.title}" is open and ${LABEL}, but no PAUL unit claims it.\n` +
       `        Link it from a phase, or close it. Work the roadmap cannot see does not get sequenced.`,
     );
+  }
+}
+
+// Rule 3: every agent-ready ticket is routed to exactly one role. Set PLAN_ROLE_PREFIX="" to disable.
+if (ROLE_PREFIX) {
+  for (const issue of agentIssues) {
+    const roles = issue.labels.map((l) => l.name).filter((n) => n.startsWith(ROLE_PREFIX));
+    if (roles.length !== 1) {
+      problems.push(
+        `unrouted: issue #${issue.number} "${issue.title}" has ${roles.length ? roles.join(", ") : "no role label"}.\n` +
+        `        Every ${LABEL} ticket needs exactly one ${ROLE_PREFIX}<role> label so the right role picks it up.`,
+      );
+    }
   }
 }
 

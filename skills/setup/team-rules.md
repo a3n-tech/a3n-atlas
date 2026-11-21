@@ -50,8 +50,10 @@ Full contract: `.paul/SPECIAL-FLOWS.md` → "Execution Seam". Drift check: `npm 
 - Everyone sets their role(s) once with `/harness:role` (PMO, PM, architect, frontend, backend, full-stack,
   DevOps, release, QA). The session then loads that role's angle of attack and first-choice skills.
 - Roles change **focus and tools, never the plan**: one shared PAUL plan, one ticket queue.
-- Every ticket carries exactly one `role:<id>` label, applied when `/to-tickets` creates it. Pick up
-  `ready-for-agent` tickets with your role label first.
+- Every ticket carries exactly one `role:<id>` label (any tracker), applied when `/to-tickets` or `/triage`
+  creates it — rules in `docs/agents/triage-labels.md`. Your session lists your role's queue; pick from it
+  first. Reassign by swapping the role label (PM, PMO or architect) with a one-line reason.
+  `check:plan` fails on an agent-ready ticket with no role or two.
 
 ### Project brain — the context source of truth
 

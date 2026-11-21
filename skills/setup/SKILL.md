@@ -140,7 +140,11 @@ diff that matches a secret pattern is held back, not pushed. Opt out per machine
 
 ## 4b2. Roles
 
-Create the nine `role:<id>` labels (see `/harness:role`, "Tickets by role") if missing. Then ask the person
+Create the nine `role:<id>` labels (see `/harness:role`, "Tickets by role") if missing. Then put the routing
+rules where the ticket skills read them: in `docs/agents/triage-labels.md`, replace the block between
+`<!-- harness:role-labels:start` and `<!-- harness:role-labels:end -->` with
+`${CLAUDE_SKILL_DIR}/../role/role-labels.md` (append it if the markers are missing). Same for Jira or any
+other tracker — the labels are the concept; `docs/agents/issue-tracker.md` says how to apply them. Then ask the person
 which role(s) they hold and run `/harness:role` — roles are per machine, never committed.
 
 ## 4c. Project brain
