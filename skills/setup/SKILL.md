@@ -57,8 +57,23 @@ graphify hook install     # post-commit/merge/checkout rebuild + graph.json merg
 graphify claude install   # CLAUDE.md section: query the graph before reading files
 ```
 
-The graph is **shared**: `graphify-out/` is committed, never gitignored (remove any
-`graphify-out/` line from `.gitignore`). Copy `${CLAUDE_SKILL_DIR}/ci/graphify-refresh.yml` to
+`graphify claude install` writes hooks into `.claude/settings.json` with the installer's
+**absolute** binary path (leaks a username, breaks on other machines). Always normalize after it:
+
+```bash
+sed -i.bak -E 's#"/[^"]*/graphify hook-guard#"graphify hook-guard#' .claude/settings.json && rm -f .claude/settings.json.bak .claude/settings.json.graphify-bak
+grep -n '"/Users/\|"/home/' .claude/settings.json && echo "STOP: absolute path left" || true
+```
+
+The graph is **shared**: `graphify-out/` is committed (remove any bare `graphify-out/` line
+from `.gitignore`), except machine-local files — ensure `.gitignore` has:
+
+```
+graphify-out/cache/
+graphify-out/.graphify_build_state.json
+graphify-out/.graphify_labels.pending.json
+```
+ Copy `${CLAUDE_SKILL_DIR}/ci/graphify-refresh.yml` to
 `.github/workflows/` so `main` keeps a fresh graph even when a teammate commits without graphify
 installed. Code is rebuilt by AST — no LLM, no key. If the repo has no graph yet, run
 `graphify update .` once and commit it.
