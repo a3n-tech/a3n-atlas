@@ -41,14 +41,23 @@ jobs:
           # Gate exactly the commit that triggered this run (github.sha) — the merge below is pinned to it.
           base=$(git merge-base origin/main "$SHA")
           bad=""; n=0
-          while IFS= read -r -d '' f; do
+          # macOS filesystems ignore case, so Brain/Index.MD must count as brain/index.md.
+          shopt -s nocasematch
+          # --raw -z: ":oldmode newmode oldsha newsha status\0path\0" — lets us reject symlinks/submodules.
+          while IFS= read -r -d '' meta && IFS= read -r -d '' f; do
             n=$((n+1))
+            newmode=$(echo "$meta" | cut -d' ' -f2)
+            case "$newmode" in
+              100644|000000) ;;                       # regular file, or deletion
+              *) bad="$bad$f (mode $newmode: symlinks, executables and submodules need a reviewed PR)\n"; continue ;;
+            esac
             case "$f" in
-              brain/.obsidian/*|brain/index.md|brain/plan/*|brain/tickets/*) bad="$bad$f (protected: reviewed PR only)\n" ;;
+              brain/.obsidian/*|*/.obsidian/*|brain/index.md|brain/plan/*|brain/tickets/*) bad="$bad$f (protected: reviewed PR only)\n" ;;
               brain/*.md|brain/*.png|brain/*.jpg|brain/*.jpeg|brain/*.gif|brain/*.webp|brain/*.pdf) ;;
               *) bad="$bad$f (not a note or image under brain/)\n" ;;
             esac
-          done < <(git diff -z --name-only --no-renames "$base" "$SHA")
+          done < <(git diff --raw -z --no-renames "$base" "$SHA")
+          shopt -u nocasematch
           [ "$n" -eq 0 ] && { echo "nothing to merge"; echo "merge=no" >> "$GITHUB_OUTPUT"; exit 0; }
           if [ -n "$bad" ]; then
             echo "::error::These changes need a normal reviewed PR (Obsidian config, the brain hub that every session reads, generated mirrors, or files outside brain/):"
