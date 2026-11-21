@@ -1,0 +1,20 @@
+{
+  "description": "a3n-tech harness: SessionStart injects the ticket handoff, flags merge conflicts for AI resolution, and registers the .paul/ AI merge driver. SessionEnd launches a detached worker that commits WIP, pushes the ticket branch, opens a draft PR, and posts an AI handoff comment. Opt out per person with HARNESS_HANDOFF=off.",
+  "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "startup|resume|clear|compact",
+        "hooks": [
+          { "type": "command", "command": "node \"${CLAUDE_PLUGIN_ROOT}/scripts/session-start.mjs\"", "timeout": 20 }
+        ]
+      }
+    ],
+    "SessionEnd": [
+      {
+        "hooks": [
+          { "type": "command", "command": "node \"${CLAUDE_PLUGIN_ROOT}/scripts/session-end.mjs\"", "async": true }
+        ]
+      }
+    ]
+  }
+}

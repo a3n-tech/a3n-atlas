@@ -40,6 +40,17 @@ In the repo, run `/harness:setup`. It:
 
 Commit the result so the rest of the team gets it.
 
+## How context moves (all automated)
+
+| Gap | Automation |
+|---|---|
+| `.paul/STATE.md` edited by two people | `paul-ai` git merge driver asks Claude to merge both sides; leftovers → `/harness:sync`; `check:plan` fails on markers |
+| Someone stops mid-ticket | SessionEnd → WIP commit (secret-scanned), push, draft PR, AI handoff comment on the issue; SessionStart loads it for the next person |
+| Code graph per person | `graphify-out/` committed; graphify git hooks + `graph.json` merge driver; CI refreshes on `main` |
+| Personal memory doesn't sync | SessionEnd writes AI-extracted decisions/gotchas to `.paul/journal/` (one file per session, no conflicts) |
+
+Logs: `~/.claude/plugins/data/<harness>/harness.log`. Self-test: `node scripts/selftest.mjs`.
+
 ## Day-to-day flow
 
 ```
@@ -63,6 +74,8 @@ repo to refresh its `CLAUDE.md` rules block.
 |---|---|
 | `skills/setup/` | `/harness:setup` — bootstrap a repo |
 | `skills/seam/` | `/harness:seam` — Execution Seam + drift checker |
+| `skills/sync/` | `/harness:sync` — AI conflict resolution |
+| `hooks/hooks.json`, `scripts/` | SessionStart/SessionEnd automation, AI merge driver |
 | `skills/seam/scripts/check-plan-drift.mjs` | the checker (read-only, needs `gh`) |
 | `skills/setup/team-rules.md` | team rules block for `CLAUDE.md` |
 | `skills/setup/project-settings.json` | plugin pins merged into a repo's `.claude/settings.json` |

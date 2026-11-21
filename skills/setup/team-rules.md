@@ -43,10 +43,22 @@ unit of execution.
 Full contract: `.paul/SPECIAL-FLOWS.md` → "Execution Seam". Drift check: `npm run check:plan`
 (or `node scripts/check-plan-drift.mjs`).
 
-### Collaboration
+### Collaboration — automated, nothing by hand
 
-- Branch per ticket, never commit to `main` directly. PRs reference the ticket (`closes #N`).
+- **One branch per ticket**, named `<issue>-slug` (e.g. `12-hero-section`). Never commit to `main`.
+  The branch name is how the hooks find the ticket.
+- **Session end (automatic):** on a ticket branch, WIP is committed, the branch pushed, a draft
+  PR opened (`Closes #N`), and an AI handoff (done / in progress / next / blockers) posted on the
+  issue. Diffs matching a secret pattern are held back and flagged instead. Opt out:
+  `HARNESS_HANDOFF=off`.
+- **Session start (automatic):** the latest handoff for the branch's ticket is loaded into
+  context — pick up where the last person (or you) stopped, without asking them.
+- **Team memory:** decisions and gotchas from each session land in `.paul/journal/` (one file
+  per session). Personal memory (claude-mem, `~/.claude`) is not shared — anything the team
+  needs goes in `.paul/`, `CLAUDE.md`, or the issue.
+- **Conflicts:** `.paul/**` conflicts are merged by the AI merge driver. Anything left —
+  planning or code — is resolved with `/harness:sync`. Never hand a conflict back to a person.
+- **Shared code graph:** `graphify-out/` is committed and refreshed by git hooks and CI. Query
+  it (`graphify query`) before reading files.
 - Run the drift check before merging anything that changes `.paul/` or closes a ticket.
-- Pull before `/paul:resume` — `.paul/STATE.md` is shared; resolve conflicts in it by hand, never
-  by taking one side wholesale.
 <!-- harness:team-rules:end -->

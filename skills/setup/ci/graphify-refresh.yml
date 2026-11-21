@@ -1,0 +1,33 @@
+name: graphify-refresh
+
+# Keeps the shared code graph current for teammates who don't have graphify
+# installed locally. Code-only AST rebuild: no LLM, no API key.
+on:
+  push:
+    branches: [main]
+    paths-ignore: ["graphify-out/**"]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: graphify-refresh
+  cancel-in-progress: true
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install graphifyy==0.9.108
+      - run: graphify update . --no-cluster
+      - name: Commit if changed
+        run: |
+          git add graphify-out
+          if git diff --cached --quiet; then exit 0; fi
+          git -c user.name="graphify-bot" -c user.email="graphify-bot@users.noreply.github.com" \
+            commit -m "chore(graph): refresh code graph [skip ci]"
+          git push

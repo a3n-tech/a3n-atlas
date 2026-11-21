@@ -1,6 +1,6 @@
 ---
 name: setup
-description: Bootstrap the a3n-tech team harness in the current repo — checks git/gh, installs PAUL and graphify, pins the team plugins in .claude/settings.json, writes the team rules into CLAUDE.md, then hands off to /paul:init, /setup-matt-pocock-skills and /harness:seam. Use when someone says "set up the harness", "initialize our harness", "onboard this repo", or opens a repo that has no .paul/ or no team rules yet.
+description: Bootstrap the a3n-tech team harness in the current repo — checks git/gh, installs PAUL and graphify, pins the team plugins in .claude/settings.json, writes the team rules into CLAUDE.md, sets up the AI merge driver and session journal, then hands off to /paul:init, /setup-matt-pocock-skills and /harness:seam. Use when someone says "set up the harness", "initialize our harness", "onboard this repo", or opens a repo that has no .paul/ or no team rules yet.
 ---
 
 # Harness setup
@@ -50,8 +50,18 @@ uv tool install graphifyy==0.9.108 || pipx install graphifyy==0.9.108
 graphify install --platform claude
 ```
 
-Building the graph (`/graphify`) costs tokens once; later questions read `graphify-out/` instead
-of the source tree. Add `graphify-out/` to `.gitignore` unless the team agrees to commit it.
+Then wire it into the repo (idempotent; each command appends rather than replaces):
+
+```bash
+graphify hook install     # post-commit/merge/checkout rebuild + graph.json merge driver
+graphify claude install   # CLAUDE.md section: query the graph before reading files
+```
+
+The graph is **shared**: `graphify-out/` is committed, never gitignored (remove any
+`graphify-out/` line from `.gitignore`). Copy `${CLAUDE_SKILL_DIR}/ci/graphify-refresh.yml` to
+`.github/workflows/` so `main` keeps a fresh graph even when a teammate commits without graphify
+installed. Code is rebuilt by AST — no LLM, no key. If the repo has no graph yet, run
+`graphify update .` once and commit it.
 
 ## 3. Pin the team plugins (repo-level, committed)
 
@@ -77,6 +87,25 @@ Target: `CLAUDE.md` at the repo root (create it with a `# <repo name>` heading i
 - Otherwise → append `team-rules.md` at the end.
 
 Never edit content outside the markers.
+
+## 4b. Collaboration automation (repo-level, committed)
+
+Ensure `.gitattributes` contains (append missing lines, never duplicate):
+
+```
+.paul/** merge=paul-ai
+```
+
+The session-start hook registers the `paul-ai` driver in each clone automatically; it asks
+Claude to merge both sides of a `.paul/` conflict and falls back to `/harness:sync`.
+
+Ensure `.paul/journal/` exists with a `.gitkeep`. Session-end writes one note per session
+there (never conflicts) and posts ticket handoffs to the issue.
+
+Tell the person once, plainly: on a ticket branch (`<N>-slug`, `issue-<N>`), ending a session
+**commits WIP, pushes the branch, opens a draft PR and comments a handoff on the issue**. A
+diff that matches a secret pattern is held back, not pushed. Opt out per machine with
+`HARNESS_HANDOFF=off`.
 
 ## 5. Hand off — the steps only a person can run
 

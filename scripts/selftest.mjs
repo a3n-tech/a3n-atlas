@@ -1,0 +1,27 @@
+// node scripts/selftest.mjs — pure-logic checks, no network.
+import assert from "node:assert/strict";
+import { issueFromBranch, hasSecret, redact, CONFLICT_RE } from "./lib.mjs";
+
+assert.equal(issueFromBranch("12-login-form"), 12);
+assert.equal(issueFromBranch("feat/34-checkout"), 34);
+assert.equal(issueFromBranch("issue-7"), 7);
+assert.equal(issueFromBranch("gh-9_x"), 9);
+assert.equal(issueFromBranch("main"), null);
+assert.equal(issueFromBranch("feat/plan"), null);
+assert.equal(issueFromBranch("v2-release"), null);
+assert.ok(hasSecret("token = " + "ghp_" + "a".repeat(36)));
+assert.ok(hasSecret("AKIA" + "ABCDEFGHIJKLMNOP"));
+assert.ok(!hasSecret("Closes #12, see docs/GO-LIVE.md"));
+assert.ok(!redact("key sk-" + "x".repeat(30)).includes("xxxx"));
+assert.ok(CONFLICT_RE.test("a\n<<<<<<< HEAD\nb"));
+assert.ok(!CONFLICT_RE.test("a <<<<<<< inline"));
+console.log("selftest ok");
+import { isHarnessRepo } from "./lib.mjs";
+import { mkdtempSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+const d = mkdtempSync(join(tmpdir(), "hx-"));
+assert.ok(!isHarnessRepo(d));
+writeFileSync(join(d, "CLAUDE.md"), "x\n<!-- harness:team-rules:start — managed -->\n");
+assert.ok(isHarnessRepo(d));
+console.log("gate ok");

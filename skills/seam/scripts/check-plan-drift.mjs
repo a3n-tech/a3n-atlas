@@ -107,6 +107,14 @@ const docs = paulDocs();
 const refs = referencedIssues(docs);
 const problems = [];
 
+// Rule 0: an unresolved merge in the plan. The AI merge driver should have
+// resolved it; if markers survive, the plan is unreadable for every teammate.
+for (const [file, text] of docs) {
+  if (/^(<{7}|>{7})( |$)/m.test(text)) {
+    problems.push(`conflict: ${file} has unresolved merge markers. Run /harness:sync to resolve them.`);
+  }
+}
+
 // Rule 2: open agent-ready work the plan never mentions.
 for (const issue of openAgentIssues()) {
   if (!refs.has(issue.number)) {
