@@ -1,0 +1,12 @@
+{
+  "extraKnownMarketplaces": {
+    "a3n-tech": {
+      "source": { "source": "github", "repo": "a3n-tech/harness" }
+    }
+  },
+  "enabledPlugins": {
+    "harness@a3n-tech": true,
+    "mattpocock-skills@claude-plugins-official": true,
+    "superpowers@claude-plugins-official": true
+  }
+}

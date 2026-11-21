@@ -1,0 +1,14 @@
+{
+  "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
+  "name": "a3n-tech",
+  "description": "a3n-tech team harness for Claude Code.",
+  "owner": { "name": "a3n-tech", "url": "https://github.com/a3n-tech" },
+  "plugins": [
+    {
+      "name": "harness",
+      "description": "Team harness: PAUL (milestones/phases) + mattpocock engineering skills (tickets/TDD/review), wired by one contract and a drift check.",
+      "source": "./",
+      "category": "productivity"
+    }
+  ]
+}
