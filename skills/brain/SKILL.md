@@ -80,8 +80,10 @@ node scripts/brain-mirror.mjs        # first mirror, committed with the setup
 
 - **brain-mirror**: refreshes `brain/plan/` on `.paul/**` changes and `brain/tickets/` on issue events
   and daily.
-- **brain-sync**: a push to any `brain/<name>` branch auto-merges into `main` **only if** every change is
-  under `brain/`, none touches the generated mirrors, and nothing matches a secret pattern; then main is
+- **brain-sync**: a push to `brain/<github-login>` auto-merges into `main` **only if** the pusher is that
+  login, every change is a note (`.md`) or image under `brain/`, nothing protected is touched
+  (`brain/.obsidian/`, `brain/index.md` — the hub every session reads — and the generated mirrors), and
+  nothing matches a secret pattern. The merge is pinned to the exact commit that was checked. Then main is
   fanned out to every `brain/*` branch. Anything else needs a normal reviewed PR.
 
 Both need the repo setting **"Allow GitHub Actions to create and approve pull requests"** and must not
@@ -95,7 +97,7 @@ The README "Team harness" section (written by `/harness:setup`) carries the how-
 - **Developers** (Claude Code): nothing to do. Sessions read `brain/index.md`; notes travel in normal PRs.
 - **Obsidian users** (owner, designers, ops) — one-time:
   1. Clone the repo **outside** any existing vault folder (not inside a personal vault, no symlinks).
-  2. `git switch -c brain/<your-name>` and push it once.
+  2. `git switch -c brain/<your-github-login>` and push it once (the name must match your GitHub login).
   3. Obsidian → "Open folder as vault" → `<repo>/brain`. Trust the vault, install the community plugin
      **Obsidian Git** when prompted (it's listed in the vault's config).
   4. Edit notes. The plugin commits and pushes every few minutes; CI merges them and brings everyone

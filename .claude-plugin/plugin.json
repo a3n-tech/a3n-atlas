@@ -1,6 +1,6 @@
 {
   "name": "harness",
-  "version": "0.5.0",
+  "version": "0.5.1",
   "description": "Team harness: PAUL owns milestones/phases, the mattpocock skills own tickets. /harness:setup bootstraps a repo, /harness:seam wires the contract and the check:plan drift checker.",
   "author": {
     "name": "a3n-tech",

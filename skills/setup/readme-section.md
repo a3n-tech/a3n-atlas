@@ -79,7 +79,8 @@ design, research, meetings, people and session journals, plus read-only mirrors 
 
 **Editing in Obsidian (no Git skills needed), one-time:**
 1. Clone this repo **outside** any existing Obsidian vault folder.
-2. `git switch -c brain/<your-name>` then `git push -u origin brain/<your-name>`.
+2. `git switch -c brain/<your-github-login>` then `git push -u origin brain/<your-github-login>`
+   (must match your GitHub login).
 3. Obsidian → *Open folder as vault* → `<repo>/brain`. Trust it and install the **Obsidian Git** plugin
    when prompted.
 4. Write notes. Obsidian Git commits and pushes every few minutes; CI merges brain-only changes into
@@ -89,8 +90,9 @@ design, research, meetings, people and session journals, plus read-only mirrors 
 its own plugins and settings — switch between them with the vault switcher. Don't put the repo inside your
 personal vault or symlink it in. Links between vaults don't work, so point to brain notes with plain links.
 
-Auto-merge only accepts changes inside `brain/` (not the generated mirrors) with no secret patterns;
-anything else needs a normal reviewed PR. Never put passwords or keys in a note.
+Auto-merge only accepts notes (`.md`) and images inside `brain/`, pushed by the branch's owner, with no secret
+patterns. Obsidian settings/plugins (`brain/.obsidian/`), the hub `brain/index.md` and the generated mirrors
+need a normal reviewed PR, as does anything outside `brain/`. Never put passwords or keys in a note.
 
 ### 4b. Conflicts
 
