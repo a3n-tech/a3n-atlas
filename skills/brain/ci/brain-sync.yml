@@ -52,7 +52,7 @@ jobs:
               *) bad="$bad$f (mode $newmode: symlinks, executables and submodules need a reviewed PR)\n"; continue ;;
             esac
             case "$f" in
-              brain/.obsidian/*|*/.obsidian/*|brain/index.md|brain/plan/*|brain/tickets/*) bad="$bad$f (protected: reviewed PR only)\n" ;;
+              brain/index.md|brain/plan/*|brain/tickets/*|*/.*|*claude.md|*agents.md|*gemini.md|*skill.md|*copilot-instructions.md) bad="$bad$f (protected: dot-folders, agent-instruction files, the hub and mirrors need a reviewed PR)\n" ;;
               brain/*.md|brain/*.png|brain/*.jpg|brain/*.jpeg|brain/*.gif|brain/*.webp|brain/*.pdf) ;;
               *) bad="$bad$f (not a note or image under brain/)\n" ;;
             esac
@@ -63,7 +63,8 @@ jobs:
             echo "::error::These changes need a normal reviewed PR (Obsidian config, the brain hub that every session reads, generated mirrors, or files outside brain/):"
             printf '%b' "$bad"; exit 1
           fi
-          if git diff "$base" "$SHA" | grep -qE '^\+.*(gh[pousr]_[A-Za-z0-9]{20,}|github_pat_|sk_(live|test)_[A-Za-z0-9]{10,}|sk-[A-Za-z0-9]{20,}|AKIA[0-9A-Z]{16}|-----BEGIN [A-Z ]*PRIVATE KEY|xox[abpors]-)'; then
+          # Scan full new contents of every changed file (binary-safe), not just text diff lines.
+          if git diff --name-only -z --no-renames --diff-filter=AM "$base" "$SHA" | xargs -0 -r -I{} git show "$SHA:{}" | grep -aqE '(gh[pousr]_[A-Za-z0-9]{20,}|github_pat_|sk_(live|test)_[A-Za-z0-9]{10,}|sk-[A-Za-z0-9]{20,}|AKIA[0-9A-Z]{16}|-----BEGIN [A-Z ]*PRIVATE KEY|xox[abpors]-)'; then
             echo "::error::A note looks like it contains a secret. Remove it (store secrets in the password manager) and push again."; exit 1
           fi
           echo "merge=yes" >> "$GITHUB_OUTPUT"

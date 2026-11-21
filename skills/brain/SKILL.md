@@ -82,7 +82,8 @@ node scripts/brain-mirror.mjs        # first mirror, committed with the setup
   and daily.
 - **brain-sync**: a push to `brain/<github-login>` auto-merges into `main` **only if** the pusher is that
   login, every change is a note (`.md`) or image under `brain/`, nothing protected is touched
-  (`brain/.obsidian/`, `brain/index.md` — the hub every session reads — and the generated mirrors), and
+  (any dot-folder such as `brain/.obsidian/`; agent-instruction files like `CLAUDE.md`/`AGENTS.md`/`SKILL.md`
+  anywhere under `brain/`; `brain/index.md` — the hub every session reads — and the generated mirrors), and
   nothing matches a secret pattern. The merge is pinned to the exact commit that was checked. Then main is
   fanned out to every `brain/*` branch. Anything else needs a normal reviewed PR.
 
