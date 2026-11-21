@@ -1,13 +1,24 @@
 {
   "extraKnownMarketplaces": {
     "a3n-tech": {
-      "source": { "source": "github", "repo": "a3n-tech/harness" }
+      "source": {
+        "source": "github",
+        "repo": "a3n-tech/harness"
+      }
     },
     "ponytail": {
-      "source": { "source": "github", "repo": "DietrichGebert/ponytail" }
+      "source": {
+        "source": "github",
+        "repo": "DietrichGebert/ponytail",
+        "ref": "96608e078b2d5ea607c5c3b8b5a54d1c1fba6846"
+      }
     },
     "caveman": {
-      "source": { "source": "git", "url": "https://github.com/JuliusBrussee/caveman.git" }
+      "source": {
+        "source": "git",
+        "url": "https://github.com/JuliusBrussee/caveman.git",
+        "ref": "ef6050c5e1848b6880ff47c32ade1a608a64f85e"
+      }
     }
   },
   "enabledPlugins": {

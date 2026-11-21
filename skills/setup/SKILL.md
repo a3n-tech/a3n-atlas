@@ -92,6 +92,10 @@ This is what distributes the harness: anyone who opens the repo and trusts the f
 prompted to install `harness@a3n-tech`, `mattpocock-skills`, `superpowers`, and the token savers
 `ponytail` (smallest working change) and `caveman` (terse output).
 
+Third-party marketplaces (ponytail, caveman) are **pinned to reviewed commits** via `ref` (full SHA;
+needs Claude Code 2.1.324+). Keep the pins from the template. Bumping a pin is a deliberate PR to
+`a3n-tech/harness`: review the upstream diff of its hooks (network calls, exec, file access) first.
+
 Never write to `.claude/settings.local.json` — that is personal and not committed.
 
 ## 4. Team rules (repo-level, committed)
