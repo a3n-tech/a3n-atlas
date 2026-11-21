@@ -1,7 +1,21 @@
 {
   "name": "harness",
-  "version": "0.2.2",
+  "version": "0.3.0",
   "description": "Team harness: PAUL owns milestones/phases, the mattpocock skills own tickets. /harness:setup bootstraps a repo, /harness:seam wires the contract and the check:plan drift checker.",
-  "author": { "name": "a3n-tech", "url": "https://github.com/a3n-tech" },
-  "repository": "https://github.com/a3n-tech/harness"
+  "author": {
+    "name": "a3n-tech",
+    "url": "https://github.com/a3n-tech"
+  },
+  "repository": "https://github.com/a3n-tech/harness",
+  "license": "LicenseRef-Proprietary",
+  "network": {
+    "hosts": [
+      "github.com",
+      "api.github.com",
+      "api.anthropic.com",
+      "registry.npmjs.org",
+      "pypi.org",
+      "files.pythonhosted.org"
+    ]
+  }
 }

@@ -1,6 +1,6 @@
 ---
 name: seam
-description: Wire PAUL (milestones/phases) and the mattpocock engineering skills (tickets/TDD/review) together in a repo so they don't fight — writes the Execution Seam contract into .paul/SPECIAL-FLOWS.md, the agent-facing summary into docs/agents/domain.md, installs the plan-drift checker as `check:plan`, and verifies it passes. Use when a repo runs (or is about to run) both PAUL and the mattpocock skills, when the user says "set up paul + matt", "wire the planning stack", "add the execution seam", "add check:plan", or after `/harness:setup`.
+description: Wire PAUL (milestones/phases) to the mattpocock engineering skills (GitHub tickets, TDD, review) so the two planning systems never disagree — writes the Execution Seam into .paul/SPECIAL-FLOWS.md, the agent summary into docs/agents/domain.md, installs the check:plan drift checker, creates triage labels, and verifies. Use this after /harness:setup or /paul:init, or whenever someone says set up paul + matt, wire the planning stack, connect phases to tickets, add check:plan, or when check:plan reports orphan/premature drift. Not for creating tickets (/to-tickets) or planning a phase (/paul:plan).
 ---
 
 # PAUL + mattpocock seam

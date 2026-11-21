@@ -1,6 +1,6 @@
 ---
 name: sync
-description: Resolve git merge/rebase conflicts with AI — never hand them back to the person. Use when the session-start hook reports unresolved conflicts, when `check:plan` reports `conflict:`, when a pull/merge/rebase stops on conflicts, or when someone says "sync", "fix the conflicts", "pull main in".
+description: Resolve git merge, rebase and pull conflicts with AI so nobody on the team resolves them by hand — .paul/ planning files, code, lockfiles, graphify graph.json. Use this whenever a pull/merge/rebase stops on conflicts, the session-start hook or check:plan reports unresolved conflicts or merge markers, or someone says sync with main, pull main in, rebase my branch, fix the conflicts — even if they only paste a CONFLICT line from git. Not for explaining git concepts or undoing a merge.
 ---
 
 # Harness sync — AI conflict resolution

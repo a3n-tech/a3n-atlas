@@ -4,7 +4,7 @@
 // Never touches the default branch's history.
 import { readFileSync, writeFileSync, existsSync, mkdirSync, rmSync, statSync } from "node:fs";
 import { join } from "node:path";
-import { sh, trySh, issueFromBranch, hasSecret, redact, claude, log, HANDOFF_MARK, isHarnessRepo, SECRET_FILE_RE } from "./lib.mjs";
+import { sh, trySh, issueFromBranch, hasSecret, redact, claude, log, HANDOFF_MARK, isHarnessRepo, SECRET_FILE_RE, repoFromUrl } from "./lib.mjs";
 
 const payloadFile = process.argv[2];
 let input;
@@ -73,9 +73,11 @@ Diff stat:\n${diffStat}\n\nTRANSCRIPT:\n${transcript}`);
 
   // Outward actions (push, PR, comment) only for private/internal repos: a WIP diff or a
   // session summary must never land somewhere public.
-  const visibility = trySh("gh", ["repo", "view", "--json", "visibility", "-q", ".visibility"], { cwd: root });
+  // Check the repo we will actually push to (origin), and pin every gh call to it.
+  const repo = repoFromUrl(tryGit("remote", "get-url", "origin"));
+  const visibility = repo && trySh("gh", ["repo", "view", repo, "--json", "visibility", "-q", ".visibility"], { cwd: root });
   if (visibility !== "PRIVATE" && visibility !== "INTERNAL") {
-    return log(`handoff: repo visibility ${visibility ?? "unknown"} — kept local (journal only), no push/PR/comment`);
+    return log(`handoff: origin ${repo ?? "unparseable"} visibility ${visibility ?? "unknown"} — kept local, no push/PR/comment`);
   }
 
   // WIP commit, but only if nothing in the change looks like a secret.
@@ -85,8 +87,9 @@ Diff stat:\n${diffStat}\n\nTRANSCRIPT:\n${transcript}`);
     tryGit("add", "-A", "--intent-to-add");
     // Fail closed: an unreadable diff, a binary, or a credential-shaped filename holds everything back.
     const diff = tryGit("diff", "HEAD");
-    const numstat = tryGit("diff", "HEAD", "--numstat");
-    const files = (numstat || "").split("\n").filter(Boolean).map((l) => l.split("\t"));
+    // -z --no-renames: raw paths, one per record, no quoting or "a => b" rename forms to parse.
+    const numstat = tryGit("diff", "HEAD", "--numstat", "-z", "--no-renames");
+    const files = (numstat || "").split("\0").filter(Boolean).map((r) => r.split("\t"));
     const reason =
       diff === null || numstat === null ? "the diff could not be read"
       : hasSecret(diff) ? "the diff matched a secret pattern"
@@ -105,15 +108,15 @@ Diff stat:\n${diffStat}\n\nTRANSCRIPT:\n${transcript}`);
 
   // Push the ticket branch and make sure a draft PR exists.
   if (tryGit("push", "-u", "origin", "HEAD") === null) notes.push("⚠️ Push failed — branch may be behind; next session should pull/rebase.");
-  const pr = trySh("gh", ["pr", "view", branch, "--json", "url", "-q", ".url"], { cwd: root });
+  const pr = trySh("gh", ["pr", "view", branch, "-R", repo, "--json", "url", "-q", ".url"], { cwd: root });
   let prUrl = pr;
   if (!pr) {
-    const title = trySh("gh", ["issue", "view", String(issue), "--json", "title", "-q", ".title"], { cwd: root }) || branch;
-    prUrl = trySh("gh", ["pr", "create", "--draft", "--head", branch, "--title", `WIP: ${title} (#${issue})`,
+    const title = trySh("gh", ["issue", "view", String(issue), "-R", repo, "--json", "title", "-q", ".title"], { cwd: root }) || branch;
+    prUrl = trySh("gh", ["pr", "create", "-R", repo, "--draft", "--head", branch, "--title", `WIP: ${title} (#${issue})`,
       "--body", `Closes #${issue}\n\nDraft opened automatically at session end. Handoff notes are on the issue.`], { cwd: root });
   }
 
   const body = `${HANDOFF_MARK}\n## Session handoff — ${author}\nBranch \`${branch}\`${prUrl ? ` · PR ${prUrl}` : ""}\n\n${handoff}\n${notes.length ? "\n" + notes.join("\n") : ""}`;
-  sh("gh", ["issue", "comment", String(issue), "--body", body], { cwd: root });
+  sh("gh", ["issue", "comment", String(issue), "-R", repo, "--body", body], { cwd: root });
   log(`handoff posted #${issue} (${branch})`);
 }

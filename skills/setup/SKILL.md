@@ -1,6 +1,6 @@
 ---
 name: setup
-description: Bootstrap the a3n-tech team harness in the current repo — checks git/gh, installs PAUL and graphify, pins the team plugins in .claude/settings.json, writes the team rules into CLAUDE.md, sets up the AI merge driver and session journal, then hands off to /paul:init, /setup-matt-pocock-skills and /harness:seam. Use when someone says "set up the harness", "initialize our harness", "onboard this repo", or opens a repo that has no .paul/ or no team rules yet.
+description: Onboard a repo or a teammate onto the a3n-tech team harness — installs PAUL and graphify, pins the team plugins (mattpocock-skills, superpowers, ponytail, caveman) in .claude/settings.json, writes the team rules into CLAUDE.md, wires the AI merge driver and session journal, then walks through /paul:init and /harness:seam. Use this whenever someone says set up / initialize / install our harness, onboard this repo, get me set up on this project, start a new team repo, or when a repo has no .paul/ or no harness rules block in CLAUDE.md, even if they never say "harness". Not for planning a phase (/paul:plan) or toggling a single plugin.
 ---
 
 # Harness setup

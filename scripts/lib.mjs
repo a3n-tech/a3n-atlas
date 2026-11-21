@@ -51,3 +51,9 @@ export const CONFLICT_RE = /^(<{7}|>{7})( |$)/m;
 export function isHarnessRepo(root) {
   try { return readFileSync(join(root, "CLAUDE.md"), "utf8").includes("<!-- harness:team-rules:start"); } catch { return false; }
 }
+
+/** owner/name from a GitHub remote URL (https or ssh); null if it isn't one. */
+export function repoFromUrl(url) {
+  const m = /^(?:https:\/\/github\.com\/|git@github\.com:|ssh:\/\/git@github\.com\/)([\w.-]+)\/([\w.-]+?)(?:\.git)?\/?$/.exec((url || "").trim());
+  return m ? `${m[1]}/${m[2]}` : null;
+}
