@@ -34,7 +34,7 @@ In the repo, run `/harness:setup`. It:
 1. checks git + `gh`,
 2. installs PAUL (`npx paul-framework@1.4.0 --global`) and graphify (`graphifyy==0.9.108`) if missing,
 3. pins `harness`, `mattpocock-skills`, `superpowers`, `ponytail`, `caveman` in `.claude/settings.json`,
-4. writes the team rules into `CLAUDE.md` between `harness:team-rules` markers,
+4. writes the team rules into `CLAUDE.md` and the how-to into `README.md` (marker-managed),
 5. walks you through `/paul:init` → `/mattpocock-skills:setup-matt-pocock-skills` (you type
    this one; agents can't) → `/harness:seam`.
 
@@ -78,4 +78,6 @@ repo to refresh its `CLAUDE.md` rules block.
 | `hooks/hooks.json`, `scripts/` | SessionStart/SessionEnd automation, AI merge driver |
 | `skills/seam/scripts/check-plan-drift.mjs` | the checker (read-only, needs `gh`) |
 | `skills/setup/team-rules.md` | team rules block for `CLAUDE.md` |
+| `skills/setup/readme-section.md` | how-to section written into every project `README.md` |
+| `evals/` | trigger evals — `claude plugin eval . --runs 2` (needs git 2.31+) |
 | `skills/setup/project-settings.json` | plugin pins merged into a repo's `.claude/settings.json` |

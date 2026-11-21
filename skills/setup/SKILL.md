@@ -103,6 +103,17 @@ Target: `CLAUDE.md` at the repo root (create it with a `# <repo name>` heading i
 
 Never edit content outside the markers.
 
+## 4a. README instructions (repo-level, committed)
+
+Every team repo's `README.md` carries the full how-to for the harness, so a new teammate can
+follow it without asking anyone. Same marker rule as the team rules:
+
+- Contains `<!-- harness:readme:start` → replace everything between the start and
+  `<!-- harness:readme:end -->` markers with `${CLAUDE_SKILL_DIR}/readme-section.md`.
+- Otherwise → append it at the end (create `README.md` with a `# <repo name>` heading if missing).
+
+Never edit the project's own README content outside the markers.
+
 ## 4b. Collaboration automation (repo-level, committed)
 
 Ensure `.gitattributes` contains (append missing lines, never duplicate):
