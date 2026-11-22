@@ -82,14 +82,16 @@ Diff stat:\n${diffStat}\n\nTRANSCRIPT:\n${transcript}`);
   }
 
   // WIP commit, but only if nothing in the change looks like a secret.
+  // graphify-out/ is rebuilt by CI on main; a PR that carries it conflicts with every other PR.
+  const KEEP_OUT = ["--", ".", ":(exclude)graphify-out"];
   const notes = [];
   const dirty = tryGit("status", "--porcelain");
   if (dirty) {
-    tryGit("add", "-A", "--intent-to-add");
+    tryGit("add", "-A", "--intent-to-add", ...KEEP_OUT);
     // Fail closed: an unreadable diff, a binary, or a credential-shaped filename holds everything back.
-    const diff = tryGit("diff", "HEAD");
+    const diff = tryGit("diff", "HEAD", ...KEEP_OUT);
     // -z --no-renames: raw paths, one per record, no quoting or "a => b" rename forms to parse.
-    const numstat = tryGit("diff", "HEAD", "--numstat", "-z", "--no-renames");
+    const numstat = tryGit("diff", "HEAD", "--numstat", "-z", "--no-renames", ...KEEP_OUT);
     const files = (numstat || "").split("\0").filter(Boolean).map((r) => r.split("\t"));
     const reason =
       diff === null || numstat === null ? "the diff could not be read"
@@ -102,7 +104,7 @@ Diff stat:\n${diffStat}\n\nTRANSCRIPT:\n${transcript}`);
       if (journalPath) { tryGit("add", journalPath); tryGit("commit", "-m", `docs(journal): session notes (#${issue})`, "--", journalPath); }
       notes.push(`⚠️ Uncommitted changes were **held back on the author's machine**: ${reason}. The author must review and commit them.`);
     } else {
-      git("add", "-A");
+      git("add", "-A", ...KEEP_OUT);
       git("commit", "-m", `wip(#${issue}): session handoff`);
     }
   }
