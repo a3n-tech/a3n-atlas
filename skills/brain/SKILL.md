@@ -20,7 +20,6 @@ Files this skill ships: `${CLAUDE_SKILL_DIR}/template/brain/` (vault skeleton + 
 | Decisions, glossary, design spec, research, meetings, people, session journal | `brain/` | native notes — edit here |
 | Plan (PROJECT, ROADMAP, STATE, SPECIAL-FLOWS) | `.paul/` (PAUL needs it; Obsidian hides dot-folders) | `brain/plan/` — generated mirror |
 | Tickets, handoffs | GitHub issues | `brain/tickets/index.md` — generated mirror |
-| Code structure | the code | `graphify-out/` (query it) |
 
 Mirrors are bot-written. Never edit them; edit the original and CI refreshes them.
 

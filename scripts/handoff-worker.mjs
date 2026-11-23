@@ -82,8 +82,7 @@ Diff stat:\n${diffStat}\n\nTRANSCRIPT:\n${transcript}`);
   }
 
   // WIP commit, but only if nothing in the change looks like a secret.
-  // graphify-out/ is rebuilt by CI on main; a PR that carries it conflicts with every other PR.
-  const KEEP_OUT = ["--", ".", ":(exclude)graphify-out"];
+  const KEEP_OUT = ["--", "."];
   const notes = [];
   const dirty = tryGit("status", "--porcelain");
   if (dirty) {
