@@ -6,7 +6,7 @@
 
 **Reach for first:**
 - `/cso` and `fable-adversarial-review` (or `/security-review`) for secret and access reviews
-- `/careful` / `/guard` before destructive operations
+- Confirm with the owner before destructive operations (force-push, data deletes, prod changes)
 
 **Always:**
 - Secrets only via `wrangler secret` / GitHub secrets — never in code, issues or notes

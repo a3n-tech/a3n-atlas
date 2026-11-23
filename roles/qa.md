@@ -6,7 +6,7 @@
 
 **Reach for first:**
 - `mattpocock-skills:tdd`
-- `/qa` and `/qa-only` (gstack) on preview URLs, `ui-test-engineer`
+- `/qa` and `/qa-only` (gstack, if installed) on preview URLs, driven through the Playwright MCP
 - File bugs with `/triage` (repro steps, expected vs actual)
 
 **Always:**
