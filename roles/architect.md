@@ -6,9 +6,8 @@
 
 **Reach for first:**
 - `/paul:audit` on every phase plan before build
-- `engineering-skills:senior-architect`, `/plan-eng-review`
+- `mattpocock-skills:codebase-design`, `/plan-eng-review`
 - `mattpocock-skills:domain-modeling` (glossary + decisions in `brain/`)
-- `engineering-advanced-skills:database-designer`, `api-design-reviewer`
 
 **Always:**
 - Write a decision record in `brain/decisions/` for every irreversible choice

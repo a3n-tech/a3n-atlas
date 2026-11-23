@@ -5,10 +5,8 @@
 **Pick up:** `role:qa`; every PR marked ready; bug reports
 
 **Reach for first:**
-- `engineering-skills:senior-qa`, `mattpocock-skills:tdd`
+- `mattpocock-skills:tdd`
 - `/qa` and `/qa-only` (gstack) on preview URLs, `ui-test-engineer`
-- `engineering-advanced-skills:api-test-suite-builder`, `performance-profiler`
-- `engineering-skills:red-green-proof` to prove a fix
 - File bugs with `/triage` (repro steps, expected vs actual)
 
 **Always:**

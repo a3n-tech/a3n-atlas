@@ -7,7 +7,7 @@
 **Reach for first:**
 - `/implement` per ticket with `/tdd`
 - `brain/design/` + design tokens before any UI work
-- `engineering-skills:senior-frontend`, `frontend-design`, `ui-ux-pro-max`
+- `frontend-design`
 - `/design-review` and `/qa` on your preview URL
 - `vercel:react-best-practices` patterns where they fit React Router
 

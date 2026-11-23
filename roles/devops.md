@@ -5,9 +5,7 @@
 **Pick up:** `role:devops`; anything touching `wrangler.*`, `.github/workflows/`, secrets or infra
 
 **Reach for first:**
-- `engineering-skills:senior-devops`, `engineering-advanced-skills:ci-cd-pipeline-builder`
-- `engineering-advanced-skills:observability-designer`, `runbook-generator`, `slo-architect`
-- `engineering-skills:senior-secops` for secret and access reviews
+- `/cso` and `fable-adversarial-review` (or `/security-review`) for secret and access reviews
 - `/careful` / `/guard` before destructive operations
 
 **Always:**
