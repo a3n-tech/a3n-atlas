@@ -57,7 +57,7 @@ Full contract: `.paul/SPECIAL-FLOWS.md` → "Execution Seam". Drift check: `npm 
 
 ### Brain: the context source of truth
 
-- One private brain repo holds team context (the repo's own `CLAUDE.md` declares it with a line `<!-- atlas:brain <owner>/<name> -->` (outside the managed rules block); without that line it is `<owner>/brain` for the repo's owner). This project lives in `projects/<repo-name>/`:
+- One private brain repo holds team context (the repo's own `CLAUDE.md` on its default branch declares it with a line `<!-- atlas:brain <owner>/<name> -->` (outside the managed rules block); without that line it is `<owner>/brain` for the repo's owner). This project lives in `projects/<repo-name>/`:
   decisions, design, research, meetings and session journals. The plugin keeps a local clone current at
   session start and loads the team hub and this project's hub. They outrank memory.
 - Record durable context there **as it happens** (a small linked note with `type:` frontmatter), not only in

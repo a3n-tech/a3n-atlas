@@ -70,9 +70,15 @@ assert.equal(gitOperationInProgress(d), "MERGE_HEAD");
 g("remote", "add", "origin", "git@github.com:a3n-tech/shop-api.git");
 assert.equal(brainProject(d), "shop-api");
 assert.equal(brainRepo(d), "a3n-tech/brain"); // default brain: <owner>/brain of the project repo
+// The declaration counts only on the remote default branch (reviewed), never from the working tree.
 writeFileSync(join(d, "CLAUDE.md"), "x\n<!-- atlas:brain other-org/team-brain -->\n");
-assert.equal(brainRepo(d), "other-org/team-brain"); // declared in committed CLAUDE.md
-writeFileSync(join(d, "CLAUDE.md"), "x\n");
+assert.equal(brainRepo(d), "a3n-tech/brain"); // working tree only: ignored
+g("merge", "--abort"); g("add", "CLAUDE.md"); g("commit", "-qm", "declare"); g("update-ref", "refs/remotes/origin/main", "HEAD");
+assert.equal(brainRepo(d), "other-org/team-brain"); // on origin/main: used
+writeFileSync(join(d, "CLAUDE.md"), "x\n<!-- atlas:brain ../.. -->\n"); g("commit", "-qam", "bad"); g("update-ref", "refs/remotes/origin/main", "HEAD");
+assert.equal(brainRepo(d), null); // "." and ".." segments are rejected
+writeFileSync(join(d, "CLAUDE.md"), "x\n"); g("commit", "-qam", "plain"); g("update-ref", "refs/remotes/origin/main", "HEAD");
+assert.equal(hubRepo("---\nrepo: ../x\n---"), null);
 // Linking is checked by the hub's `repo:` line (linkedHub), so a same-name repo elsewhere maps to a folder name only.
 assert.equal(hubRepo("---\ntype: project-hub\nrepo: a3n-tech/shop-api\n---\n# x"), "a3n-tech/shop-api");
 assert.equal(hubRepo("---\nrepo: REPLACE-WITH-OWNER/REPO-NAME\n---"), "REPLACE-WITH-OWNER/REPO-NAME");

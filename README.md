@@ -61,7 +61,7 @@ Commit the result so the rest of the team gets it.
 
 ## Brain
 
-One repo of notes with `projects/<repo-name>/` per project. Which brain a repo uses is committed config: the repo's own `CLAUDE.md` declares it with a line `<!-- atlas:brain <owner>/<name> -->` (outside the managed rules block); without that line it is `<owner>/brain` for the repo's owner. Brains must be private or internal. At session start the plugin keeps a
+One repo of notes with `projects/<repo-name>/` per project. Which brain a repo uses is committed config: the repo's own `CLAUDE.md` on its default branch declares it with a line `<!-- atlas:brain <owner>/<name> -->` (outside the managed rules block); without that line it is `<owner>/brain` for the repo's owner. Brains must be private or internal. At session start the plugin keeps a
 local clone current in the background and injects the team hub and the project hub. Session journals go to
 `projects/<repo>/journal/`, each as its own branch `notes/<github-login>/<session>` and PR, and the brain's CI gate auto-merges
 plain notes. `/a3ntech:brain` bootstraps the brain repo (once per org), links a project repo, and migrates an
