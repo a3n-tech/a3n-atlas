@@ -1,5 +1,5 @@
 ---
 type: tool_used
 tool: Skill
-input_match: '"skill"\s*:\s*"(?:harness:)?role"'
+input_match: '"skill"\s*:\s*"(?:a3ntech:)?role"'
 ---

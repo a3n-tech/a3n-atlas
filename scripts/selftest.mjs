@@ -47,3 +47,31 @@ writeFileSync(join(d, "lenses", "lead.md"), "# lead");
 writeFileSync(rf2, "lead ../etc/passwd ghost frontend");
 assert.deepEqual(readRoles(rf2), ["lead", "frontend"]);   // personal lens kept, traversal + unknown dropped
 console.log("personal lens ok");
+// Branch parsing: only conventional prefixes are tickets.
+for (const b of ["hotfix/500-error", "release/2026-11", "renovate/node-18", "v2-release", "0-zero"]) assert.equal(issueFromBranch(b), null, b);
+assert.equal(issueFromBranch("fix/7_crash"), 7);
+import { parseSections, gitOperationInProgress, handoffEnabled, brainProject } from "./lib.mjs";
+assert.deepEqual(parseSections("noise\n=== HANDOFF ===\n- a \"q\"\n=== JOURNAL ===\n\n=== TITLE ===\nslug\n"),
+  { handoff: '- a "q"', journal: "", title: "slug" });
+assert.deepEqual(parseSections("garbage"), { handoff: "", journal: "", title: "" });
+for (const [v, on] of [[undefined, true], ["true", true], ["false", false], ["off", false]]) {
+  if (v === undefined) delete process.env.CLAUDE_PLUGIN_OPTION_HANDOFF; else process.env.CLAUDE_PLUGIN_OPTION_HANDOFF = v;
+  assert.equal(handoffEnabled(), on, `handoff=${v}`);
+}
+delete process.env.CLAUDE_PLUGIN_OPTION_HANDOFF;
+console.log("parse/options ok");
+// Merge in progress is detected; project name comes from origin.
+import { execFileSync as x } from "node:child_process";
+const g = (...a) => x("git", a, { cwd: d, stdio: "pipe" });
+g("init", "-q", "-b", "main"); g("config", "user.email", "t@t"); g("config", "user.name", "t");
+writeFileSync(join(d, "f"), "a\n"); g("add", "f"); g("commit", "-qm", "a");
+assert.equal(gitOperationInProgress(d), null);
+g("checkout", "-qb", "o"); writeFileSync(join(d, "f"), "o\n"); g("commit", "-qam", "o");
+g("checkout", "-q", "main"); writeFileSync(join(d, "f"), "m\n"); g("commit", "-qam", "m");
+try { g("merge", "o"); } catch {}
+assert.equal(gitOperationInProgress(d), "MERGE_HEAD");
+g("remote", "add", "origin", "git@github.com:a3n-tech/shop-api.git");
+assert.equal(brainProject(d), "shop-api");
+g("remote", "set-url", "origin", "https://github.com/a3n-tech/brain.git");
+assert.equal(brainProject(d), null); // the brain repo is not a project of itself
+console.log("git state ok");

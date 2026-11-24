@@ -1,5 +1,5 @@
 {
-  "description": "a3n-tech harness: SessionStart injects the ticket handoff, flags merge conflicts for AI resolution, and registers the .paul/ AI merge driver. SessionEnd launches a detached worker that commits WIP, pushes the ticket branch, opens a draft PR, and posts an AI handoff comment. Opt out per person with HARNESS_HANDOFF=off.",
+  "description": "Atlas (a3n-tech): SessionStart injects the ticket handoff, flags merge conflicts for AI resolution, and registers the .paul/ AI merge driver. SessionEnd launches a detached worker that commits WIP, pushes the ticket branch, opens a draft PR, and posts an AI handoff comment. Opt out per person with the handoff option (legacy HARNESS_HANDOFF=off still works).",
   "hooks": {
     "SessionStart": [
       {

@@ -1,0 +1,28 @@
+name: test
+
+# Cheap on purpose (org budget: 2000 Actions minutes/month): one job, no installs, skips drafts and docs-only changes.
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+    paths: ["scripts/**", "skills/**", "hooks/**", ".claude-plugin/**", "tests/**", "!**/*.md"]
+  workflow_dispatch:
+
+concurrency:
+  group: test-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    if: github.event_name == 'workflow_dispatch' || github.event.pull_request.draft == false
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - run: node scripts/selftest.mjs
+      - run: node skills/seam/scripts/check-plan-drift.test.mjs
+      - run: bash -eo pipefail tests/gate.test.sh
+      - name: Manifests parse
+        run: for f in .claude-plugin/*.json hooks/hooks.json; do node -e "JSON.parse(require('fs').readFileSync('$f','utf8'))"; done

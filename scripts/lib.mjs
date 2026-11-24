@@ -1,7 +1,7 @@
 // Shared helpers for the harness hooks. No dependencies: node + git + gh + claude.
-import { execFileSync } from "node:child_process";
+import { execFileSync, execFile } from "node:child_process";
 import { appendFileSync, mkdirSync, readFileSync, existsSync } from "node:fs";
-import { join } from "node:path";
+import { join, resolve } from "node:path";
 import { homedir } from "node:os";
 
 export function sh(cmd, args, opts = {}) {
@@ -10,11 +10,27 @@ export function sh(cmd, args, opts = {}) {
 export function trySh(cmd, args, opts = {}) {
   try { return sh(cmd, args, opts); } catch { return null; }
 }
+/** Async trySh, so independent gh calls can run in parallel inside a hook's time budget. */
+export function trySpawn(cmd, args, opts = {}) {
+  return new Promise((res) => execFile(cmd, args, { encoding: "utf8", maxBuffer: 16 * 1024 * 1024, ...opts },
+    (err, out) => res(err ? null : out.trim())));
+}
 
-/** Issue number from a ticket branch: `12-login`, `issue-12`, `feat/12-login`, `gh-12_x`. */
+/** Issue number from a ticket branch: `12-login`, `issue-12`, `feat/12-login`, `gh-12_x`.
+ *  Only conventional prefixes count, so `hotfix/500-error` or `release/2026-11` are not tickets.
+ *  Callers still confirm the issue exists and is open before acting on it. */
 export function issueFromBranch(branch) {
-  const m = /(?:^|\/)(?:issue-|gh-)?(\d+)(?:[-_]|$)/.exec(branch || "");
-  return m ? Number(m[1]) : null;
+  const m = /^(?:(?:feat|fix|chore|docs|refactor|test|perf|ci|build|style)\/)?(?:issue-|gh-)?(\d{1,6})(?:[-_]|$)/.exec(branch || "");
+  return m && Number(m[1]) > 0 ? Number(m[1]) : null;
+}
+
+/** A merge, rebase, cherry-pick, revert or bisect is in progress: never commit on top of it. */
+export function gitOperationInProgress(root) {
+  for (const p of ["MERGE_HEAD", "rebase-merge", "rebase-apply", "CHERRY_PICK_HEAD", "REVERT_HEAD", "BISECT_LOG"]) {
+    const path = trySh("git", ["rev-parse", "--git-path", p], { cwd: root });
+    if (path && existsSync(resolve(root, path))) return p; // worktrees return absolute paths
+  }
+  return trySh("git", ["diff", "--name-only", "--diff-filter=U"], { cwd: root }) ? "unmerged files" : null;
 }
 
 // shortcut: regex scan only, catches common token shapes; upgrade to gitleaks if the team adopts it.
@@ -34,8 +50,10 @@ export function claude(prompt, model = "haiku", timeout = 180_000) {
     { input: prompt, timeout, env: { ...process.env, HARNESS_CHILD: "1" }, maxBuffer: 20 * 1024 * 1024 });
 }
 
+export const dataDir = () => process.env.CLAUDE_PLUGIN_DATA || join(homedir(), ".claude", "harness");
+
 export function log(msg) {
-  const dir = process.env.CLAUDE_PLUGIN_DATA || join(homedir(), ".claude", "harness");
+  const dir = dataDir();
   try { mkdirSync(dir, { recursive: true }); appendFileSync(join(dir, "harness.log"), `${new Date().toISOString()} ${msg}\n`); } catch {}
 }
 
@@ -71,4 +89,28 @@ export function readRoles(file = rolesFile()) {
     return [...new Set(readFileSync(file, "utf8").split(/[\s,]+/).map((r) => r.trim().toLowerCase())
       .filter((r) => /^[a-z0-9-]{1,32}$/.test(r) && (ROLES.includes(r) || existsSync(personalLens(r)))))];
   } catch { return []; }
+}
+
+// ---- Plugin options (userConfig in plugin.json; Claude Code exports them as CLAUDE_PLUGIN_OPTION_<KEY>).
+const opt = (k) => process.env[`CLAUDE_PLUGIN_OPTION_${k}`];
+/** Session-end handoff: on unless the person turned it off (plugin option, or legacy HARNESS_HANDOFF=off). */
+export const handoffEnabled = () => !/^(false|off|0|no)$/i.test(opt("HANDOFF") ?? "") && process.env.HARNESS_HANDOFF !== "off";
+
+// ---- Central brain: one org repo (default a3n-tech/brain), one folder per project: projects/<repo-name>/.
+export function brainRepo() {
+  const r = (opt("BRAIN_REPO") || process.env.HARNESS_BRAIN_REPO || "a3n-tech/brain").trim();
+  return /^[\w.-]+\/[\w.-]+$/.test(r) ? r : null;
+}
+export const brainDir = () => opt("BRAIN_DIR") || process.env.HARNESS_BRAIN_DIR || join(dataDir(), "brain");
+/** Project folder name in the central brain: the GitHub repo name. Never the brain repo itself. */
+export function brainProject(root) {
+  const repo = repoFromUrl(trySh("git", ["remote", "get-url", "origin"], { cwd: root }));
+  const name = repo?.split("/")[1];
+  return name && /^[A-Za-z0-9._-]+$/.test(name) && !name.startsWith(".") && repo !== brainRepo() ? name : null;
+}
+
+/** Model output as three delimited sections (not JSON: one raw newline in a JSON string loses the whole handoff). */
+export function parseSections(raw) {
+  const get = (name) => (new RegExp(`^=== ${name} ===\\s*$([\\s\\S]*?)(?=^=== [A-Z]+ ===\\s*$|(?![\\s\\S]))`, "m").exec(raw || "")?.[1] || "").trim();
+  return { handoff: get("HANDOFF"), journal: get("JOURNAL"), title: get("TITLE") };
 }

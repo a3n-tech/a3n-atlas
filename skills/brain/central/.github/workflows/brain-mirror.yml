@@ -1,0 +1,57 @@
+name: brain-mirror
+
+# Daily, or on demand (a project repo can trigger it with the optional Dispatch App: workflow_dispatch).
+# Pulls each project's .paul/ files and open issues into projects/<name>/plan and projects/<name>/tickets.
+# Bot-written; nobody edits the mirrors.
+on:
+  schedule:
+    - cron: "17 6 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: brain-mirror
+  cancel-in-progress: false
+
+jobs:
+  mirror:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+      # Reader App: installed on the project repos (Contents, Issues, Metadata: read). Mints a 1-hour token
+      # scoped down to read-only here. GITHUB_TOKEN cannot read other repos.
+      - name: Token for reading project repos
+        id: reader
+        uses: actions/create-github-app-token@v2
+        with:
+          app-id: ${{ vars.BRAIN_READER_APP_ID }}
+          private-key: ${{ secrets.BRAIN_READER_PRIVATE_KEY }}
+          owner: ${{ github.repository_owner }}
+          permission-contents: read
+          permission-issues: read
+      - name: Mirror plans and tickets
+        run: node scripts/brain-mirror.mjs
+        env:
+          GH_TOKEN: ${{ steps.reader.outputs.token }}
+          GITHUB_REPOSITORY_OWNER: ${{ github.repository_owner }}
+      - name: Commit and push if changed
+        id: push
+        run: |
+          git add projects/*/plan projects/*/tickets
+          if git diff --cached --quiet; then echo "pushed=no" >> "$GITHUB_OUTPUT"; exit 0; fi
+          git -c user.name="brain-bot" -c user.email="brain-bot@users.noreply.github.com" \
+            commit -m "chore(brain): refresh plan and tickets mirror"
+          # Pushes here use the checkout's GITHUB_TOKEN, never the Reader App token (it is read-only).
+          for _ in 1 2 3; do
+            if git pull --rebase -q origin main && git push origin HEAD:main; then
+              echo "pushed=yes" >> "$GITHUB_OUTPUT"; exit 0
+            fi
+            sleep 5
+          done
+          exit 1

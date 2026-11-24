@@ -15,6 +15,7 @@
 import { execFileSync } from "node:child_process";
 import { readFileSync, readdirSync, existsSync } from "node:fs";
 import { join } from "node:path";
+import { pathToFileURL } from "node:url";
 
 const PAUL_DIR = ".paul";
 const LABEL = process.env.PLAN_AGENT_LABEL || "ready-for-agent";
@@ -43,13 +44,20 @@ function paulDocs() {
   return out;
 }
 
-/** Issue numbers referenced anywhere in the plan, including `#5 – #18` ranges. */
-function referencedIssues(docs) {
+const MAX_RANGE = 100;
+const MAX_OPEN = 500;
+
+/** Issue numbers referenced anywhere in the plan, including `#5 – #18` ranges (en dash, as documented in the seam skill). */
+export function referencedIssues(docs, problems = []) {
   const refs = new Map(); // number -> file that mentions it
   for (const [file, text] of docs) {
-    for (const m of text.matchAll(/#(\d+)\s*[–-]\s*#(\d+)/g)) {
+    for (const m of text.matchAll(/#(\d+) – #(\d+)/g)) {
       const [a, b] = [Number(m[1]), Number(m[2])];
-      for (let n = Math.min(a, b); n <= Math.max(a, b); n++) if (!refs.has(n)) refs.set(n, file);
+      if (b < a || b - a >= MAX_RANGE) {
+        problems.push(`range: ${file} has "${m[0]}", which is not an ascending range of at most ${MAX_RANGE} issues. List them explicitly.`);
+        continue;
+      }
+      for (let n = a; n <= b; n++) if (!refs.has(n)) refs.set(n, file);
     }
     for (const m of text.matchAll(/#(\d+)\b/g)) {
       const n = Number(m[1]);
@@ -61,8 +69,13 @@ function referencedIssues(docs) {
 
 function openAgentIssues() {
   const raw = sh("gh", ["issue", "list", "--state", "open", "--label", LABEL,
-                        "--limit", "200", "--json", "number,title,labels"]);
-  return JSON.parse(raw);
+                        "--limit", String(MAX_OPEN), "--json", "number,title,labels"]);
+  const issues = JSON.parse(raw);
+  if (issues.length >= MAX_OPEN) {
+    console.error(`plan drift: ${issues.length} open ${LABEL} issues hit the ${MAX_OPEN} fetch limit; some are not checked.`);
+    process.exit(2);
+  }
+  return issues;
 }
 
 // An *explicit* claim that an issue is finished. Deliberately narrow.
@@ -89,76 +102,84 @@ function completedPhaseIssues(docs) {
 function issueState(n) {
   try {
     return JSON.parse(sh("gh", ["issue", "view", String(n), "--json", "state,title"]));
+  } catch (e) {
+    const err = String(e.stderr || e.message);
+    if (/Could not resolve to an Issue|not found/i.test(err)) return null; // does not exist
+    // Rate limit, network, 5xx, auth: do not read this as "not open".
+    console.error(`plan drift: could not read issue #${n}: ${err.trim()}`);
+    process.exit(2);
+  }
+}
+
+function main() {
+  if (!existsSync(PAUL_DIR)) {
+    console.error(`plan drift: no ${PAUL_DIR}/ here. Run from the repo root of a PAUL project.`);
+    process.exit(2);
+  }
+  try {
+    sh("gh", ["auth", "status"]);
   } catch {
-    return null; // not an issue (a PR, or does not exist)
+    console.error("plan drift: `gh` is missing or not authenticated. Run `gh auth login`.");
+    process.exit(2);
   }
-}
 
-if (!existsSync(PAUL_DIR)) {
-  console.error(`plan drift: no ${PAUL_DIR}/ here. Run from the repo root of a PAUL project.`);
-  process.exit(2);
-}
-try {
-  sh("gh", ["auth", "status"]);
-} catch {
-  console.error("plan drift: `gh` is missing or not authenticated. Run `gh auth login`.");
-  process.exit(2);
-}
+  const docs = paulDocs();
+  const problems = [];
+  const refs = referencedIssues(docs, problems);
 
-const docs = paulDocs();
-const refs = referencedIssues(docs);
-const problems = [];
-
-// Rule 0: an unresolved merge in the plan. The AI merge driver should have
-// resolved it; if markers survive, the plan is unreadable for every teammate.
-for (const [file, text] of docs) {
-  if (/^(<{7}|>{7})( |$)/m.test(text)) {
-    problems.push(`conflict: ${file} has unresolved merge markers. Run /harness:sync to resolve them.`);
+  // Rule 0: an unresolved merge in the plan. The AI merge driver should have
+  // resolved it; if markers survive, the plan is unreadable for every teammate.
+  for (const [file, text] of docs) {
+    if (/^(<{7}|>{7})( |$)/m.test(text)) {
+      problems.push(`conflict: ${file} has unresolved merge markers. Run /a3ntech:sync to resolve them.`);
+    }
   }
-}
 
-// Rule 2: open agent-ready work the plan never mentions.
-const agentIssues = openAgentIssues();
-for (const issue of agentIssues) {
-  if (!refs.has(issue.number)) {
-    problems.push(
-      `orphan: issue #${issue.number} "${issue.title}" is open and ${LABEL}, but no PAUL unit claims it.\n` +
-      `        Link it from a phase, or close it. Work the roadmap cannot see does not get sequenced.`,
-    );
-  }
-}
-
-// Rule 3: every agent-ready ticket is routed to exactly one role. Set PLAN_ROLE_PREFIX="" to disable.
-if (ROLE_PREFIX) {
+  // Rule 2: open agent-ready work the plan never mentions.
+  const agentIssues = openAgentIssues();
   for (const issue of agentIssues) {
-    const roles = issue.labels.map((l) => l.name).filter((n) => n.startsWith(ROLE_PREFIX));
-    if (roles.length !== 1) {
+    if (!refs.has(issue.number)) {
       problems.push(
-        `unrouted: issue #${issue.number} "${issue.title}" has ${roles.length ? roles.join(", ") : "no role label"}.\n` +
-        `        Every ${LABEL} ticket needs exactly one ${ROLE_PREFIX}<role> label so the right role picks it up.`,
+        `orphan: issue #${issue.number} "${issue.title}" is open and ${LABEL}, but no PAUL unit claims it.\n` +
+        `        Link it from a phase, or close it. Work the roadmap cannot see does not get sequenced.`,
       );
     }
   }
-}
 
-// Rule 1: a phase claiming completion while its issue is still open.
-for (const { file, line, issue } of completedPhaseIssues(docs)) {
-  const st = issueState(issue);
-  if (st && st.state === "OPEN") {
-    problems.push(
-      `premature: ${file} marks work complete while #${issue} "${st.title}" is still open.\n` +
-      `        State follows the tracker — reopen the phase or close the issue.\n` +
-      `        ${line}`,
-    );
+  // Rule 3: every agent-ready ticket is routed to exactly one role. Set PLAN_ROLE_PREFIX="" to disable.
+  if (ROLE_PREFIX) {
+    for (const issue of agentIssues) {
+      const roles = issue.labels.map((l) => l.name).filter((n) => n.startsWith(ROLE_PREFIX));
+      if (roles.length !== 1) {
+        problems.push(
+          `unrouted: issue #${issue.number} "${issue.title}" has ${roles.length ? roles.join(", ") : "no role label"}.\n` +
+          `        Every ${LABEL} ticket needs exactly one ${ROLE_PREFIX}<role> label so the right role picks it up.`,
+        );
+      }
+    }
   }
+
+  // Rule 1: a phase claiming completion while its issue is still open.
+  for (const { file, line, issue } of completedPhaseIssues(docs)) {
+    const st = issueState(issue);
+    if (st && st.state === "OPEN") {
+      problems.push(
+        `premature: ${file} marks work complete while #${issue} "${st.title}" is still open.\n` +
+        `        State follows the tracker — reopen the phase or close the issue.\n` +
+        `        ${line}`,
+      );
+    }
+  }
+
+  if (problems.length === 0) {
+    console.log(`plan drift: none. ${refs.size} issue reference(s) across ${docs.length} plan file(s).`);
+    process.exit(0);
+  }
+
+  console.error(`plan drift: ${problems.length} problem(s)\n`);
+  for (const p of problems) console.error(`  - ${p}\n`);
+  console.error("See .paul/SPECIAL-FLOWS.md, \"Execution Seam\".");
+  process.exit(1);
 }
 
-if (problems.length === 0) {
-  console.log(`plan drift: none. ${refs.size} issue reference(s) across ${docs.length} plan file(s).`);
-  process.exit(0);
-}
-
-console.error(`plan drift: ${problems.length} problem(s)\n`);
-for (const p of problems) console.error(`  - ${p}\n`);
-console.error("See .paul/SPECIAL-FLOWS.md, \"Execution Seam\".");
-process.exit(1);
+if (import.meta.url === pathToFileURL(process.argv[1]).href) main();

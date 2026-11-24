@@ -1,8 +1,8 @@
-<!-- harness:readme:start — managed by /harness:setup; edit in a3n-tech/harness, not here -->
-## Team harness
+<!-- harness:readme:start — managed by /a3ntech:setup; edit in a3n-tech/atlas, not here -->
+## Atlas
 
-This repo runs the **a3n-tech harness**: one shared way of planning, building and handing off
-work with Claude Code. Source and changelog: [a3n-tech/harness](https://github.com/a3n-tech/harness).
+This repo runs **Atlas**, the a3n-tech agentic team toolkit: one shared way of planning, building and handing off
+work with Claude Code. Source and changelog: [a3n-tech/atlas](https://github.com/a3n-tech/atlas).
 
 - **PAUL** owns the plan: milestones and phases in `.paul/`.
 - **Engineering skills** (mattpocock) own the work: one GitHub issue → one branch → TDD → review.
@@ -11,27 +11,32 @@ work with Claude Code. Source and changelog: [a3n-tech/harness](https://github.c
 
 ### 1. One-time setup (per person)
 
-1. Get access to the private repo `a3n-tech/harness` (ask an org owner).
+1. Get access to the private repo `a3n-tech/atlas` (ask an org owner).
 2. Install the tools:
    ```bash
-   gh auth login                      # GitHub CLI, needs repo scope
+   gh auth login && gh auth setup-git   # GitHub CLI + git credentials (private marketplace)
    node --version                     # Node 18+
    git --version                      # 2.31+ (macOS: brew install git)
    brew install uv                    # or pipx — used to install graphify
    ```
-3. Clone this repo and open Claude Code in it. When asked, **trust the folder** and **install the
-   plugins** it lists (`harness`, `mattpocock-skills`, `superpowers`, `ponytail`, `caveman`).
-   If you aren't asked, run:
+3. Install Atlas (needs Claude Code 2.1.324+). `mattpocock-skills` and `superpowers` install with it:
+   ```bash
+   claude plugin marketplace add a3n-tech/atlas
+   claude plugin install a3ntech@a3n-tech
    ```
-   /plugin marketplace add a3n-tech/harness
-   /plugin install harness@a3n-tech
-   ```
-4. Run `/harness:setup`. It installs PAUL and graphify on your machine, then checks that this
+   (or `/plugin ...` inside Claude Code). Opening this repo does not install anything by itself.
+   Update with `claude plugin update a3ntech@a3n-tech`, or turn on auto-update for the marketplace in `/plugin`.
+4. Clone this repo, open Claude Code in it and **trust the folder**. The repo pins `ponytail`, `caveman`
+   and `claude-code-skills`.
+5. Run `/a3ntech:setup`. It installs PAUL and graphify on your machine, then checks that this
    repo is wired. **Restart Claude Code** after it installs anything.
+
+Per-person options (`/config` or `claude plugin configure a3ntech@a3n-tech`): `handoff` (on by default),
+`brain_repo` (default `a3n-tech/brain`), `brain_dir` (optional: your own clone of the brain repo).
 
 ### 1b. Set your role (once)
 
-Run `/harness:role` and say what you do (e.g. "frontend", "backend and devops", "QA"). Roles: PMO, PM,
+Run `/a3ntech:role` and say what you do (e.g. "frontend", "backend and devops", "QA"). Roles: PMO, PM,
 architect, frontend, backend, full-stack, DevOps, release engineer, QA/STE. Your sessions then focus on
 your role's work and reach for its skills first; your tickets are labelled `role:<you>`. It's stored on your
 machine only (`~/.config/a3n-harness/roles`).
@@ -52,7 +57,7 @@ npm run check:plan            before merging anything touching .paul/ or closing
 ```
 
 **Branch names matter.** Start every ticket branch with the issue number (`12-hero-section`,
-`issue-12`, `feat/12-hero`). That's how the hooks find the ticket. Never commit to `main`.
+`issue-12`, `gh-12`, `feat/12-hero`; types: feat, fix, chore, docs, refactor, test, perf, ci, build, style). That's how the hooks find the ticket. Never commit to `main`.
 
 **Human-only tasks** (API keys, accounts, DNS, registrations, approvals) are GitHub issues labelled
 `ready-for-human`, assigned to whoever owns them. Agents only take `ready-for-agent`. Never paste a secret
@@ -64,9 +69,9 @@ into an issue — store it with `wrangler secret` or the password manager and cl
 |---|---|---|
 | You open a session on a ticket branch | The latest teammate handoff for that issue is loaded into context | Issue comments marked *Session handoff* |
 | You end a session on a ticket branch | WIP committed, branch pushed, draft PR opened, handoff comment posted (done / in progress / next / blockers) | The issue and its draft PR |
-| Any session ends | Decisions and gotchas saved as one note per session | `brain/journal/` |
+| Any session ends | Decisions and gotchas saved as one note per session | `projects/<repo>/journal/` in the central brain |
 | Two people edit `.paul/` | AI merge driver merges both sides | `git log` |
-| A conflict survives | Next session tells Claude to run `/harness:sync` | — |
+| A conflict survives | Next session tells Claude to run `/a3ntech:sync` | — |
 | Code is committed | Code graph rebuilt (git hooks locally, CI on `main`) | `graphify-out/` |
 
 **Safety rules built in:**
@@ -75,36 +80,31 @@ into an issue — store it with `wrangler secret` or the password manager and cl
   credential files (`.env`, `*.pem`, `id_rsa`…), or can't be read. The handoff says so.
 - Handoffs are loaded only from repo owners, members and collaborators, and are treated as notes,
   never as instructions.
-- Opt out of the session-end automation on your machine: `export HARNESS_HANDOFF=off`.
+- The issue must exist and be open. Nothing runs during a merge, rebase or cherry-pick, WIP commits carry
+  `[skip ci]`, and your staging is never changed.
+- Opt out of the session-end automation: turn off the `handoff` option (legacy `HARNESS_HANDOFF=off` still works).
 
-### 4. Project brain (Obsidian)
+### 4. Central brain
 
-`brain/` is the project's shared knowledge base and **source of truth for context**: decisions, glossary,
-design, research, meetings, people and session journals, plus read-only mirrors of the plan
-(`brain/plan/`) and open tickets (`brain/tickets/`). Claude reads `brain/index.md` every session.
+Team context lives in one org repo, `a3n-tech/brain`, with a folder per project at `projects/<repo-name>/`:
+decisions, design, research, meetings, session journals, and read-only mirrors of the plan and open tickets.
+The plugin keeps a local clone current at session start, and Claude reads the team hub and this project's hub.
+Nothing to set up per repo: `/a3ntech:brain` links it (once).
 
-**Developers:** nothing to set up — add or edit notes in `brain/` in your normal PRs.
-
-**Editing in Obsidian (no Git skills needed), one-time:**
-1. Clone this repo **outside** any existing Obsidian vault folder.
-2. `git switch -c brain/<your-github-login>` then `git push -u origin brain/<your-github-login>`
+**Editing on GitHub (no Git skills needed):**
+1. Open the brain repo on GitHub and create your branch `notes/<your-github-login>` from `main`
    (must match your GitHub login).
-3. Obsidian → *Open folder as vault* → `<repo>/brain`. Trust it and install the **Obsidian Git** plugin
-   when prompted.
-4. Write notes. Obsidian Git commits and pushes every few minutes; CI merges brain-only changes into
-   `main` automatically and brings everyone else's notes back to you.
+2. Edit or add notes with the web editor and commit to that branch, or clone the repo and edit with any editor,
+   then push the branch. Use GitHub's "Update branch" first so you start from the latest notes.
+3. The brain's CI gate merges plain notes into `main`. Protected files need a normal PR.
 
-**Already use Obsidian with your own vault?** Nothing changes for it. The brain is a separate vault with
-its own plugins and settings — switch between them with the vault switcher. Don't put the repo inside your
-personal vault or symlink it in. Links between vaults don't work, so point to brain notes with plain links.
-
-Auto-merge only accepts notes (`.md`) and images inside `brain/`, pushed by the branch's owner, with no secret
-patterns. Obsidian settings/plugins (`brain/.obsidian/`), the hub `brain/index.md` and the generated mirrors
-need a normal reviewed PR, as does anything outside `brain/`. Never put passwords or keys in a note.
+Session journals from Claude go to `projects/<repo>/journal/` on your `notes/<github-login>` branch the same way.
+Auto-merge accepts only notes (`.md`) and images from the branch owner with no secret patterns. Hubs, mirrors,
+dot-paths, scripts and workflows need a normal reviewed PR. Never put passwords or keys in a note.
 
 ### 4b. Conflicts
 
-Don't resolve conflicts by hand. Run `/harness:sync`, or just start a session: the hook spots
+Don't resolve conflicts by hand. Run `/a3ntech:sync`, or just start a session: the hook spots
 the conflict and Claude resolves it. Planning files, code, lockfiles and `graph.json` each have
 their own rule. You're asked only when two tickets demand opposite behaviour.
 
@@ -118,19 +118,19 @@ their own rule. You're asked only when two tickets demand opposite behaviour.
 
 ### 6. Rules
 
-Team rules (secrets, no AI attribution, raise everything you notice, planning stack) are in
+Team rules (secrets, no AI attribution, raise everything you notice, planning stack, CI budget) are in
 `CLAUDE.md`, between the `harness:team-rules` markers. Claude loads them every session. Change
-them in `a3n-tech/harness`, not here.
+them in `a3n-tech/atlas`, not here.
 
 ### 7. Troubleshooting
 
 | Problem | Fix |
 |---|---|
-| `/paul:*` or `/harness:*` not found | Restart Claude Code; run `/plugin` and check that `harness@a3n-tech` is enabled |
-| No handoff posted | Branch name must start with the issue number; check `~/.claude/plugins/data/*harness*/harness.log` |
+| `/paul:*` or `/a3ntech:*` not found | Restart Claude Code; run `/plugin` and check that `a3ntech@a3n-tech` is enabled |
+| No handoff posted | Branch name must start with the issue number; check the branch name format above, that the issue is open, and `~/.claude/plugins/data/*harness*/harness.log` |
 | `check:plan` reports `orphan` | An open `ready-for-agent` issue isn't linked to any phase: add it to a phase in `.paul/` |
 | `check:plan` reports `premature` | A phase claims done while its issue is open: close the issue or reopen the phase |
-| `check:plan` reports `conflict` | Run `/harness:sync` |
-| graphify errors in hooks | Run `/harness:setup` to install graphify |
-| Harness updated | `/plugin marketplace update a3n-tech`, then `/harness:setup` to refresh `CLAUDE.md` and this section |
+| `check:plan` reports `conflict` | Run `/a3ntech:sync` |
+| graphify errors in hooks | Run `/a3ntech:setup` to install graphify |
+| Atlas updated | `claude plugin update a3ntech@a3n-tech`, then `/a3ntech:setup` to refresh `CLAUDE.md` and this section |
 <!-- harness:readme:end -->
