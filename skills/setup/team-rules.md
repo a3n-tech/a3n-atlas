@@ -87,8 +87,6 @@ Full contract: `.paul/SPECIAL-FLOWS.md` → "Execution Seam". Drift check: `npm 
   needs goes in `.paul/`, `CLAUDE.md`, or the issue.
 - **Conflicts:** `.paul/**` conflicts are merged by the AI merge driver. Anything left —
   planning or code — is resolved with `/a3ntech:sync`. Never hand a conflict back to a person.
-- **Shared code graph:** `graphify-out/` is committed and refreshed by git hooks and CI. Query
-  it (`graphify query`) before reading files.
 - **CI budget:** the org has 2000 Actions minutes a month. Workflows skip draft PRs, cancel superseded
   runs, set `timeout-minutes`, never trigger on `issues:`, and schedule no more often than every 6 hours.
 - Run the drift check before merging anything that changes `.paul/` or closes a ticket.

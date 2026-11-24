@@ -58,12 +58,18 @@ ok "no WIP commit on main after branch switch" '[ "$(git -C "$T/app" log -1 --fo
 ok "origin main untouched" '[ "$(git --git-dir="$T/app.git" log -1 --format=%s main)" = init ]'
 git switch -q 12-feat 2>/dev/null || git switch -q -f 12-feat
 
-# 2. Staged graphify-out file is never committed.
-mkdir -p graphify-out; echo "token=ghp_$(printf 'a%.0s' $(seq 36))" > graphify-out/leak.txt; git add -f graphify-out/leak.txt
+# 2. A secret anywhere, including in an already staged file, holds the WIP back: nothing committed or pushed.
+mkdir -p gen; echo "token=ghp_$(printf 'a%.0s' $(seq 36))" > gen/leak.txt; git add gen/leak.txt; before=$(git rev-parse HEAD)
 run s2
-ok "graphify-out not in WIP commit" '! git -C "$T/app" show --name-only --format= HEAD | grep -q graphify-out'
+ok "staged secret: no WIP commit" '[ "$(git -C "$T/app" rev-parse HEAD)" = "$before" ]'
+ok "staged secret: held-back note in handoff" 'grep -q "held back" "$GHLOG"'
+ok "staged secret: person staging kept" 'git -C "$T/app" diff --cached --name-only | grep -q gen/leak.txt'
+git rm -q --cached gen/leak.txt; rm -rf gen
+
+# 2b. Clean change: WIP commit with [skip ci].
+echo clean >> f.txt
+run s2b
 ok "WIP commit made with [skip ci]" 'git -C "$T/app" log -1 --format=%s | grep -q "skip ci"'
-git rm -q --cached --ignore-unmatch graphify-out/leak.txt; rm -rf graphify-out
 
 # 3. Branch number is a PR, not an issue: no commit, no comment.
 echo more >> f.txt; before=$(git rev-parse HEAD)

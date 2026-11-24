@@ -1,6 +1,6 @@
 ---
 name: sync
-description: Resolve git merge, rebase and pull conflicts with AI so nobody on the team resolves them by hand — .paul/ planning files, code, lockfiles, graphify graph.json. Use this whenever a pull/merge/rebase stops on conflicts, the session-start hook or check:plan reports unresolved conflicts or merge markers, or someone says sync with main, pull main in, rebase my branch, fix the conflicts — even if they only paste a CONFLICT line from git. Not for explaining git concepts or undoing a merge.
+description: Resolve git merge, rebase and pull conflicts with AI so nobody on the team resolves them by hand — .paul/ planning files, code, lockfiles. Use this whenever a pull/merge/rebase stops on conflicts, the session-start hook or check:plan reports unresolved conflicts or merge markers, or someone says sync with main, pull main in, rebase my branch, fix the conflicts — even if they only paste a CONFLICT line from git. Not for explaining git concepts or undoing a merge.
 ---
 
 # Harness sync — AI conflict resolution
@@ -30,7 +30,6 @@ For every file from `--diff-filter=U`:
    - Code — both behaviours must survive. If they genuinely contradict (same function, opposite
      logic), prefer the side whose ticket is newer **and** say so in the report.
    - Lockfiles — never hand-merge: take theirs, then rerun the package manager install.
-   - `graphify-out/graph.json` — `graphify merge-driver` / `graphify update .`, never by hand.
 4. Verify: no `<<<<<<<`/`>>>>>>>` left, file parses (run the project's typecheck/test/lint if it
    has one), then `git add <f>`.
 

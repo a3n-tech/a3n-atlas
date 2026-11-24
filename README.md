@@ -11,7 +11,7 @@ everyone works from the same brain, the same plugins and the same process, each 
 
 ## Install (once per person)
 
-Needs Claude Code 2.1.324+, Node 18+, and `uv` or `pipx` (for graphify). The marketplace is private, so
+Needs Claude Code 2.1.324+ and Node 18+. The marketplace is private, so
 git needs credentials (or use an SSH key):
 
 ```bash
@@ -21,10 +21,11 @@ claude plugin install a3ntech@a3n-tech
 ```
 
 Or use `/plugin ...` inside Claude Code. `mattpocock-skills` installs automatically as a dependency.
-Had the old `harness` plugin? Remove it first, or both sets of hooks run: `claude plugin uninstall harness@a3n-tech`. `ponytail`, `caveman` and `claude-code-skills` stay as repo-level pins in `.claude/settings.json`,
+Had the old `harness` plugin? Remove it first, or both sets of hooks run: `claude plugin uninstall harness@a3n-tech`. `ponytail` and `caveman` stay as repo-level pins in `.claude/settings.json`,
 written by setup. Opening a repo does not install anything: `enabledPlugins` only enables what is already installed.
 
 Update with `claude plugin update a3ntech@a3n-tech`, or turn on auto-update for the marketplace in `/plugin`.
+Also needed on your machine: `gh` logged in (`gh auth login`), and the Node and npm versions in the project's `package.json` `engines` field (Homebrew `node@22` ships npm 10; install npm 11 if the project asks for it).
 
 ## Per-person options
 
@@ -36,14 +37,21 @@ Set in `/config` or with `claude plugin configure a3ntech@a3n-tech`.
 | `brain_repo` | `a3n-tech/brain` | The team brain repo. |
 | `brain_dir` | empty | Optional: your own clone of the brain repo. |
 
+## Token savers
+
+| Tool | Saves tokens by | Off switch |
+|---|---|---|
+| `caveman` | terse replies, no filler | "stop caveman" / "normal mode" |
+| `ponytail` | smallest working diff, no speculative code | "stop ponytail" |
+
 ## Onboard a repo
 
 In the repo, run `/a3ntech:setup`. It:
 
 1. checks git and `gh`,
-2. installs PAUL (`npx paul-framework@1.4.0 --global`) and graphify (`graphifyy==0.9.108`) if missing,
-3. pins `ponytail`, `caveman` and `claude-code-skills` in `.claude/settings.json`,
-4. writes the team rules into `CLAUDE.md` and the how-to into `README.md` (marker-managed),
+2. installs PAUL (`npx paul-framework@1.4.0 --global`) if missing,
+3. pins `ponytail` and `caveman` in `.claude/settings.json`,
+4. writes the team rules into `CLAUDE.md`, a short pointer into `README.md` (marker-managed) and the setup guide into `docs/HARNESS-SETUP.md`,
 5. adds `.paul/** merge=paul-ai` to `.gitattributes`,
 6. reviews `.github/workflows/*` for CI cost and proposes fixes (see CI budget),
 7. links the repo to the central brain with `/a3ntech:brain`,
@@ -67,7 +75,6 @@ old per-repo `brain/` folder. Details: `skills/brain/central/README.md`.
 | `.paul/STATE.md` edited by two people | `paul-ai` git merge driver asks Claude to merge both sides; leftovers go to `/a3ntech:sync`; `check:plan` fails on markers |
 | Someone stops mid-ticket | SessionEnd: WIP commit (secret-scanned, `[skip ci]`), push, draft PR, AI handoff comment on the issue. SessionStart loads it for the next person |
 | Team context | Central brain: local clone kept current at session start; hubs injected; journals pushed to the person's `notes/` branch |
-| Code graph per person | `graphify-out/` committed; graphify git hooks and `graph.json` merge driver; CI refreshes on `main` |
 | Who works on what | `role:<id>` label on every ticket; the session lists your role's queue |
 
 The handoff only runs on ticket branches (`<N>-slug`, `issue-<N>`, `gh-<N>`, `<type>/<N>-slug`) with an open issue,

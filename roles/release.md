@@ -6,8 +6,7 @@
 
 **Reach for first:**
 - `/ship`, `/land-and-deploy`, `/canary` (gstack)
-- `engineering-advanced-skills:changelog-generator`, `/document-release`
-- `engineering-advanced-skills:ship-gate` before production
+- `/document-release`
 - `node scripts/check-plan-drift.mjs` before tagging
 
 **Always:**

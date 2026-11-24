@@ -100,8 +100,7 @@ Diff stat:\n${diffStat}\n\nTRANSCRIPT:\n${transcript}`);
   if (!sameBranch()) return log(`handoff: HEAD moved off ${branch} before the WIP commit — skipped`);
 
   // WIP commit, but only if nothing in the change looks like a secret.
-  // graphify-out/ is rebuilt by CI on main; a PR that carries it conflicts with every other PR.
-  const KEEP_OUT = ["--", ".", ":(exclude)graphify-out"];
+  const KEEP_OUT = ["--", "."];
   const notes = [];
   const dirty = tryGit("status", "--porcelain");
   if (dirty) {
@@ -112,8 +111,6 @@ Diff stat:\n${diffStat}\n\nTRANSCRIPT:\n${transcript}`);
     const gi = (...a) => trySh("git", a, { cwd: root, env });
     try {
       if (existsSync(realIndex)) copyFileSync(realIndex, tmpIndex);
-      // Anything already staged under graphify-out/ goes back to HEAD's version: excluded paths are never committed.
-      gi("reset", "-q", "HEAD", "--", "graphify-out");
       gi("add", "-A", ...KEEP_OUT);
       // Fail closed: an unreadable diff, a binary, or a credential-shaped filename holds everything back.
       const diff = gi("diff", "--cached", "HEAD", ...KEEP_OUT);

@@ -1,6 +1,6 @@
 ---
 name: setup
-description: Onboard a repo or a teammate onto Atlas, the a3n-tech agentic team toolkit. Installs PAUL and graphify, pins the repo-level plugins (ponytail, caveman, claude-code-skills) in .claude/settings.json, writes the team rules into CLAUDE.md, wires the AI merge driver, links the repo to the central brain, reviews CI cost, then walks through /paul:init and /a3ntech:seam. Use this whenever someone says set up / initialize / install Atlas (or the harness), onboard this repo, get me set up on this project, start a new team repo, or when a repo has no .paul/ or no team rules block in CLAUDE.md, even if they never say "Atlas". Not for planning a phase (/paul:plan) or toggling a single plugin.
+description: Onboard a repo or a teammate onto Atlas, the a3n-tech agentic team toolkit. Installs PAUL, pins the repo-level plugins (ponytail, caveman) in .claude/settings.json, writes the team rules into CLAUDE.md, wires the AI merge driver, links the repo to the central brain, reviews CI cost, then walks through /paul:init and /a3ntech:seam. Use this whenever someone says set up / initialize / install Atlas (or the harness), onboard this repo, get me set up on this project, start a new team repo, or when a repo has no .paul/ or no team rules block in CLAUDE.md, even if they never say "Atlas". Not for planning a phase (/paul:plan) or toggling a single plugin.
 ---
 
 # Atlas setup
@@ -9,7 +9,7 @@ One command to bring a repo (and a teammate) onto Atlas. Every step is
 idempotent: detect first, write only what is missing, report what was skipped.
 
 Files this skill ships: `${CLAUDE_SKILL_DIR}/project-settings.json`,
-`${CLAUDE_SKILL_DIR}/team-rules.md`.
+`${CLAUDE_SKILL_DIR}/team-rules.md`, `${CLAUDE_SKILL_DIR}/readme-section.md`, `${CLAUDE_SKILL_DIR}/harness-setup.md`.
 
 ## 1. Preconditions
 
@@ -37,49 +37,6 @@ npx -y paul-framework@1.4.0 --global
 PAUL commands load on the next session. If you just installed it, say so: the person must
 restart Claude Code before `/paul:*` works.
 
-### Graphify (token saver — query a code graph instead of re-reading files)
-
-```bash
-which graphify && ls ~/.claude/skills/graphify/SKILL.md 2>/dev/null
-```
-
-Missing → tell the person it installs a Python CLI and a global skill, then run (prefer `uv`, fall back to `pipx`):
-
-```bash
-uv tool install graphifyy==0.9.108 || pipx install graphifyy==0.9.108
-graphify install --platform claude
-```
-
-Then wire it into the repo (idempotent; each command appends rather than replaces):
-
-```bash
-graphify hook install     # post-commit/merge/checkout rebuild + graph.json merge driver
-graphify claude install   # CLAUDE.md section: query the graph before reading files
-```
-
-`graphify claude install` writes hooks into `.claude/settings.json` with the installer's
-**absolute** binary path (leaks a username, breaks on other machines). Always normalize after it:
-
-```bash
-sed -i.bak -E 's#"/[^"]*/graphify hook-guard#"graphify hook-guard#' .claude/settings.json && rm -f .claude/settings.json.bak .claude/settings.json.graphify-bak
-grep -n '"/Users/\|"/home/' .claude/settings.json && echo "STOP: absolute path left" || true
-```
-
-The graph is **shared**: `graphify-out/` is committed (remove any bare `graphify-out/` line
-from `.gitignore`), except machine-local files and the HTML viewer (it renders labels from repo content
-unescaped — a stored-XSS risk if shared) — ensure `.gitignore` has:
-
-```
-graphify-out/cache/
-graphify-out/.graphify_build_state.json
-graphify-out/.graphify_labels.pending.json
-graphify-out/graph.html
-```
- Copy `${CLAUDE_SKILL_DIR}/ci/graphify-refresh.yml` to
-`.github/workflows/` so `main` keeps a fresh graph even when a teammate commits without graphify
-installed. Code is rebuilt by AST — no LLM, no key. If the repo has no graph yet, run
-`graphify update .` once and commit it.
-
 ## 3. Pin the team plugins (repo-level, committed)
 
 Merge `${CLAUDE_SKILL_DIR}/project-settings.json` into `.claude/settings.json`:
@@ -87,13 +44,11 @@ Merge `${CLAUDE_SKILL_DIR}/project-settings.json` into `.claude/settings.json`:
 - File missing → copy it.
 - File exists → read it, add only missing keys under `extraKnownMarketplaces` and
   `enabledPlugins`. Never drop or change existing keys. Keep formatting.
-- Also remove an `enabledPlugins` key `superpowers@claude-plugins-official` (dropped from Atlas: it duplicates the
-  planning, TDD and debugging flow that PAUL and the mattpocock skills own). Say so in the report.
 - One exception, the rename to Atlas: replace an `enabledPlugins` key `harness` + `@a3n-tech` with
   `a3ntech@a3n-tech`, and set the `a3n-tech` marketplace `repo` to `a3n-tech/atlas`. Say so in the report.
 
 This pins the repo-level tools: the token savers `ponytail` (smallest working change) and
-`caveman` (terse output), plus `claude-code-skills`. `enabledPlugins` does not install anything.
+`caveman` (terse output). `enabledPlugins` does not install anything.
 Each person installs Atlas once (below); `mattpocock-skills` comes with it as a dependency.
 If they still have the old `harness` plugin, uninstall it first (`claude plugin uninstall harness@a3n-tech`), or both
 sets of hooks run.
@@ -108,7 +63,7 @@ claude plugin install a3ntech@a3n-tech
 
 Updates: `claude plugin update a3ntech@a3n-tech`, or turn on auto-update for the marketplace in `/plugin`.
 
-Third-party marketplaces (ponytail, caveman, claude-code-skills) are **pinned to reviewed commits** via `ref` (full SHA;
+Third-party marketplaces (ponytail, caveman) are **pinned to reviewed commits** via `ref` (full SHA;
 needs Claude Code 2.1.324+). Keep the pins from the template. Bumping a pin is a deliberate PR to
 `a3n-tech/atlas`: review the upstream diff of its hooks (network calls, exec, file access) first.
 
@@ -125,16 +80,20 @@ Target: `CLAUDE.md` at the repo root (create it with a `# <repo name>` heading i
 
 Never edit content outside the markers.
 
-## 4a. README instructions (repo-level, committed)
+## 4a. README pointer and setup guide (repo-level, committed)
 
-Every team repo's `README.md` carries the full how-to for the harness, so a new teammate can
-follow it without asking anyone. Same marker rule as the team rules:
+Every team repo's `README.md` carries a short pointer (12 lines max) to `CLAUDE.md`, `docs/agents/` and
+`docs/HARNESS-SETUP.md`. Same marker rule as the team rules:
 
 - Contains `<!-- harness:readme:start` → replace everything between the start and
   `<!-- harness:readme:end -->` markers with `${CLAUDE_SKILL_DIR}/readme-section.md`.
 - Otherwise → append it at the end (create `README.md` with a `# <repo name>` heading if missing).
 
 Never edit the project's own README content outside the markers.
+
+Setup and troubleshooting detail lives in `docs/HARNESS-SETUP.md`. Copy `${CLAUDE_SKILL_DIR}/harness-setup.md`
+there (create `docs/` if needed). If the target's first line is `<!-- managed by /harness:setup`, replace the
+whole file; if it exists without that line, leave it and say so.
 
 ## 4b. Collaboration automation (repo-level, committed)
 
@@ -189,6 +148,32 @@ which role(s) they hold and run `/a3ntech:role` — roles are per machine, never
 Link the repo to the central brain with `/a3ntech:brain`. It creates `projects/<repo-name>/` in
 `a3n-tech/brain` (bootstrapping the brain repo if the org has none yet) and migrates any old
 per-repo `brain/` folder. Do not copy brain workflows into the project repo.
+
+## 4d. Migrations (existing repos; each step is a no-op when already clean)
+
+Re-running setup removes what the harness no longer ships. Detect first, change only what matches, report
+what was removed. Never touch `.claude/settings.local.json`.
+
+**Graphify (removed in 0.8.0).** Only 54 `graphify query` runs against 2,857 hook nudges in 90 days.
+
+1. `.claude/settings.json`: delete every hook whose `command` contains `graphify` (e.g. `graphify hook-guard ...`,
+   with or without an absolute path). Drop a hook group or `hooks` event key left empty. Keep all other hooks.
+2. Delete `.github/workflows/graphify-refresh.yml` if present (`git rm`).
+3. `package.json`: delete a `graph:guard` script, and remove its step from the `verify` script (and from any
+   CI workflow that calls it). Also delete `scripts/*graph*guard*` if it only served that script.
+4. `.gitattributes`: delete the `graphify-out/graph.json merge=graphify` line (any line containing `merge=graphify`).
+5. `graphify-out/`: if tracked, `git rm -r --cached -q graphify-out`; make sure `.gitignore` lists `graphify-out/`
+   (replace the old `graphify-out/cache/...` partial lines with that one line).
+6. `CLAUDE.md`: delete an old `## graphify` section outside the harness markers only if it is the stock
+   graphify block; otherwise tell the person. Local `git config merge.graphify.*` and the graphify git hooks
+   in `.git/hooks` are per clone: tell the person to run `graphify hook uninstall` if they have it.
+
+**Plugins unpinned in 0.8.0.** In `.claude/settings.json`, remove these `enabledPlugins` keys only when the
+value equals the old harness default (`true`); leave any other value alone and say so:
+`superpowers@claude-plugins-official`, `engineering-skills@claude-code-skills`,
+`engineering-advanced-skills@claude-code-skills`. If nothing in `enabledPlugins` still uses
+`@claude-code-skills`, also remove the `claude-code-skills` entry from `extraKnownMarketplaces`.
+Keep `mattpocock-skills`, `ponytail`, `caveman`; the `harness` key is renamed (see step 3).
 
 ## 5. Hand off — the steps only a person can run
 

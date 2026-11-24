@@ -25,7 +25,6 @@ The session-start context names it ("Local clone: …"). Default: the plugin dat
 | Team-wide standards, people, glossary | the brain root | `index.md`, `people/`, `glossary.md` |
 | Plan (PROJECT, ROADMAP, STATE, SPECIAL-FLOWS) | the project's `.paul/` | `projects/<repo>/plan/`, generated |
 | Tickets, handoffs | GitHub issues | `projects/<repo>/tickets/index.md`, generated |
-| Code structure | the code | the project's `graphify-out/` |
 
 ## A. Bootstrap the brain repo (once per org; an owner does this)
 
