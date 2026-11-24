@@ -146,7 +146,7 @@ which role(s) they hold and run `/a3ntech:role` — roles are per machine, never
 ## 4c. Brain
 
 Link the repo to the brain with `/a3ntech:brain`. It creates `projects/<repo-name>/` in
-the brain repo (bootstrapping it if the org has none yet; the repo's own `CLAUDE.md` declares it with a line `<!-- atlas:brain <owner>/<name> -->` (outside the managed rules block); without that line it is `<owner>/brain` for the repo's owner) and migrates any old
+the brain repo (bootstrapping it if the org has none yet; the repo's own `CLAUDE.md` on its default branch declares it with a line `<!-- atlas:brain <owner>/<name> -->` (outside the managed rules block); without that line it is `<owner>/brain` for the repo's owner) and migrates any old
 per-repo `brain/` folder. Do not copy brain workflows into the project repo.
 
 ## 4d. Migrations (existing repos; each step is a no-op when already clean)

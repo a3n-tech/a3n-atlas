@@ -104,12 +104,16 @@ export const originRepo = (root) => repoFromUrl(trySh("git", ["remote", "get-url
 /** The brain repo for a project repo. Declared in its committed CLAUDE.md as `<!-- atlas:brain owner/name -->` (outside
  *  the managed rules block, so setup never overwrites it; changing it goes through that repo's PR review). No
  *  declaration means `<owner>/brain` for the project repo's owner. Never a personal setting. */
-const BRAIN_MARK = /^<!--\s*atlas:brain\s+([\w.-]+\/[\w.-]+)\s*-->\s*$/m;
+// owner/name segments start with a letter or digit, so "." and ".." can never become path segments.
+export const REPO_RE = /^[A-Za-z0-9][\w.-]*\/[A-Za-z0-9][\w.-]*$/;
+const BRAIN_MARK = /^<!--\s*atlas:brain\s+(\S+)\s*-->\s*$/m;
 export function brainRepo(root) {
   if (!root) return null;
-  let declared = null;
-  try { declared = BRAIN_MARK.exec(readFileSync(join(root, "CLAUDE.md"), "utf8"))?.[1] ?? null; } catch {}
-  if (declared) return declared;
+  // Read the declaration from the remote default branch (reviewed content), never the working tree: checking out an
+  // unreviewed branch must not be able to point this repo's journals and context at another brain.
+  const def = trySh("git", ["symbolic-ref", "--short", "refs/remotes/origin/HEAD"], { cwd: root }) || "origin/main";
+  const declared = BRAIN_MARK.exec(trySh("git", ["show", `${def}:CLAUDE.md`], { cwd: root }) || "")?.[1];
+  if (declared) return REPO_RE.test(declared) ? declared : null;
   const owner = originRepo(root)?.split("/")[0];
   return owner ? `${owner}/brain` : null;
 }
@@ -141,8 +145,8 @@ export function brainProject(root) {
 /** `repo: owner/name` from a hub's frontmatter, or null. */
 export function hubRepo(text) {
   const fm = /^---\n([\s\S]*?)\n---/.exec(text || "")?.[1] || "";
-  const m = /^repo:\s*["']?([\w.-]+\/[\w.-]+)["']?\s*$/m.exec(fm);
-  return m ? m[1] : null;
+  const m = /^repo:\s*["']?(\S+?)["']?\s*$/m.exec(fm);
+  return m && REPO_RE.test(m[1]) ? m[1] : null;
 }
 /** The project's hub text from the brain's reviewed main, only if this repo is linked there: projects/<name>/index.md
  *  exists as a file (it only arrives through a reviewed PR) and its `repo:` is exactly this repo's owner/name. That

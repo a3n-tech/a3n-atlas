@@ -14,7 +14,7 @@ settings). Every step is idempotent: detect, write only what is missing, never o
 
 ## Where is the local clone?
 
-Which brain: the repo's own `CLAUDE.md` declares it with a line `<!-- atlas:brain <owner>/<name> -->` (outside the managed rules block); without that line it is `<owner>/brain` for the repo's owner. The session-start context names the local clone ("Local clone: …"): one clone per brain at
+Which brain: the repo's own `CLAUDE.md` on its default branch declares it with a line `<!-- atlas:brain <owner>/<name> -->` (outside the managed rules block); without that line it is `<owner>/brain` for the repo's owner. The session-start context names the local clone ("Local clone: …"): one clone per brain at
 `<base>/<owner>/<name>`, where `<base>` is the plugin data dir + `/brains` or the `brain_dir` option. Atlas uses a clone
 only if its origin is that brain and GitHub reports the brain private or internal. Below, `$BRAIN` is that path.
 

@@ -9,10 +9,10 @@
 // Never blocks a session: the next session reads whatever is on disk.
 import { existsSync, mkdirSync, writeFileSync, rmSync } from "node:fs";
 import { dirname, join } from "node:path";
-import { trySh, log, brainDir, dataDir, acquireLock, repoFromUrl, isPrivateRepo, PRIVATE_STAMP } from "./lib.mjs";
+import { trySh, log, brainDir, dataDir, acquireLock, repoFromUrl, isPrivateRepo, PRIVATE_STAMP, REPO_RE } from "./lib.mjs";
 
 const repo = process.argv[2];
-if (!repo || !/^[\w.-]+\/[\w.-]+$/.test(repo)) process.exit(log(`brain-pull: invalid brain repo ${JSON.stringify(repo)}`));
+if (!repo || !REPO_RE.test(repo)) process.exit(log(`brain-pull: invalid brain repo ${JSON.stringify(repo)}`));
 const dir = brainDir(repo);
 
 // One pull per brain at a time (several sessions can start together).

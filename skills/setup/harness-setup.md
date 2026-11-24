@@ -30,7 +30,7 @@ work with Claude Code. Source and changelog: [a3n-tech/a3n-atlas](https://github
    repo is wired. **Restart Claude Code** after it installs anything.
 
 Per-person options (`/config` or `claude plugin configure a3ntech@a3n-tech`): `handoff` (on by default),
-`brain_dir` (optional: folder that holds one clone per brain). Which brain a repo uses is not a personal setting: the repo's own `CLAUDE.md` declares it with a line `<!-- atlas:brain <owner>/<name> -->` (outside the managed rules block); without that line it is `<owner>/brain` for the repo's owner.
+`brain_dir` (optional: folder that holds one clone per brain). Which brain a repo uses is not a personal setting: the repo's own `CLAUDE.md` on its default branch declares it with a line `<!-- atlas:brain <owner>/<name> -->` (outside the managed rules block); without that line it is `<owner>/brain` for the repo's owner.
 
 ## 1b. Set your role (once)
 

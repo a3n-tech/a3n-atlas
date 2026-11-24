@@ -2,7 +2,7 @@
 
 ## 0.8.0
 
-- Which brain a repo uses is committed config, never a personal setting: `<!-- atlas:brain owner/name -->` in the repo's `CLAUDE.md` (outside the managed block), else `<owner>/brain`. The `brain_repo` option is gone.
+- Which brain a repo uses is committed config, never a personal setting: `<!-- atlas:brain owner/name -->` in `CLAUDE.md` on the repo's default branch (outside the managed block; read from `origin`, never the working tree), else `<owner>/brain`. The `brain_repo` option is gone.
 - One clone per brain (`<base>/<owner>/<name>`). A clone is used only if its configured origin is that brain and `brain-pull` last confirmed it private or internal, so an untrusted repo can never point a team repo's journals or context at another brain.
 - Mirror skips hubs that name an owner outside `BRAIN_PROJECT_OWNERS` (default: the brain's owner) and the template placeholder.
 - Docs and rules match the code: branch types, per-session notes branches, "brain" and hub terms in the glossary, secret patterns aligned between the gate and the hooks.
