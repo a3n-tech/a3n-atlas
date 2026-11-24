@@ -6,7 +6,7 @@
 
 **Reach for first:**
 - `/implement` per ticket with `/tdd`
-- `engineering-skills:senior-fullstack` plus the frontend and backend sets
+- The frontend and backend sets
 - `/qa` on the preview URL before review
 - `/code-review`
 

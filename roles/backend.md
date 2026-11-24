@@ -6,10 +6,8 @@
 
 **Reach for first:**
 - `/implement` per ticket with `/tdd` (red → green)
-- `engineering-skills:senior-backend`, `engineering-skills:stripe-integration-expert`
-- `engineering-advanced-skills:api-design-reviewer`, `sql-database-assistant`
-- `superpowers:systematic-debugging` for bugs
-- `/code-review` before requesting review
+- `mattpocock-skills:diagnosing-bugs` for bugs
+- `/code-review` and `mattpocock-skills:code-review` before requesting review
 
 **Always:**
 - Idempotent webhooks, server-side validation, no secrets in code

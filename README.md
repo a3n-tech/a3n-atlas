@@ -17,7 +17,7 @@ Team harness for Claude Code. One contract for how we plan and build:
 Repos already on the harness commit `.claude/settings.json` that registers this marketplace,
 so Claude Code prompts you to install it when you open the repo and trust the folder.
 
-Also needed on your machine: `gh` logged in (`gh auth login`), Node 18+, `uv` or `pipx` (for graphify).
+Also needed on your machine: `gh` logged in (`gh auth login`), and the Node and npm versions in the project's `package.json` `engines` field (Homebrew `node@22` ships npm 10; install npm 11 if the project asks for it).
 
 ## Token savers
 
@@ -25,16 +25,15 @@ Also needed on your machine: `gh` logged in (`gh auth login`), Node 18+, `uv` or
 |---|---|---|
 | `caveman` | terse replies, no filler | "stop caveman" / "normal mode" |
 | `ponytail` | smallest working diff, no speculative code | "stop ponytail" |
-| `graphify` | answering codebase questions from `graphify-out/` instead of re-reading files | don't run `/graphify` |
 
 ## Onboard a repo
 
 In the repo, run `/harness:setup`. It:
 
 1. checks git + `gh`,
-2. installs PAUL (`npx paul-framework@1.4.0 --global`) and graphify (`graphifyy==0.9.108`) if missing,
-3. pins `harness`, `mattpocock-skills`, `superpowers`, `ponytail`, `caveman` in `.claude/settings.json`,
-4. writes the team rules into `CLAUDE.md` and the how-to into `README.md` (marker-managed),
+2. installs PAUL (`npx paul-framework@1.4.0 --global`) if missing,
+3. pins `harness`, `mattpocock-skills`, `ponytail`, `caveman` in `.claude/settings.json`,
+4. writes the team rules into `CLAUDE.md`, a short pointer into `README.md` (marker-managed) and the setup guide into `docs/HARNESS-SETUP.md`,
 5. walks you through `/paul:init` → `/mattpocock-skills:setup-matt-pocock-skills` (you type
    this one; agents can't) → `/harness:seam`.
 
@@ -46,7 +45,6 @@ Commit the result so the rest of the team gets it.
 |---|---|
 | `.paul/STATE.md` edited by two people | `paul-ai` git merge driver asks Claude to merge both sides; leftovers → `/harness:sync`; `check:plan` fails on markers |
 | Someone stops mid-ticket | SessionEnd → WIP commit (secret-scanned), push, draft PR, AI handoff comment on the issue; SessionStart loads it for the next person |
-| Code graph per person | `graphify-out/` committed; graphify git hooks + `graph.json` merge driver; CI refreshes on `main` |
 | Personal memory doesn't sync | Project brain (`brain/`, Obsidian vault in each repo) is the shared context source of truth; SessionEnd writes AI-extracted decisions/gotchas to `brain/journal/` |
 
 Logs: `~/.claude/plugins/data/<harness>/harness.log`. Self-test: `node scripts/selftest.mjs`.

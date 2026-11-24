@@ -82,7 +82,5 @@ Full contract: `.paul/SPECIAL-FLOWS.md` → "Execution Seam". Drift check: `npm 
   needs goes in `.paul/`, `CLAUDE.md`, or the issue.
 - **Conflicts:** `.paul/**` conflicts are merged by the AI merge driver. Anything left —
   planning or code — is resolved with `/harness:sync`. Never hand a conflict back to a person.
-- **Shared code graph:** `graphify-out/` is committed and refreshed by git hooks and CI. Query
-  it (`graphify query`) before reading files.
 - Run the drift check before merging anything that changes `.paul/` or closes a ticket.
 <!-- harness:team-rules:end -->
