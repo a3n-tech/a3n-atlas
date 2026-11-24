@@ -33,6 +33,7 @@ S17(){ w projects/x/index.md/a.md x; }
 S18(){ w index.md/a.md x; }
 S19(){ w projects/x/CLAUDE.local.md x; }
 S20(){ w notes/AGENTS.override.md x; }
+S21(){ w notes/creds.md "db password = \"hunter2hunter2\""; }
 S16(){ w "notes/Team meeting 2026-11.md" x; }
 t "plain note" 0 notes/alice alice S1
 t "secret in 20 large notes (pipefail)" 1 notes/alice alice S2
@@ -49,6 +50,7 @@ t "newline in file name" 1 notes/alice alice S14
 t "< in file name" 1 notes/alice alice S15
 t "dir named projects/x/index.md" 1 notes/alice alice S17
 t "dir named index.md" 1 notes/alice alice S18
+command -v gitleaks >/dev/null && t "gitleaks: assigned password" 1 notes/alice alice S21
 t "space in file name ok" 0 notes/alice alice S16
 t "CLAUDE.local.md" 1 notes/alice alice S19
 t "AGENTS.override.md" 1 notes/alice alice S20

@@ -1,0 +1,41 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": ["config:recommended", "helpers:pinGitHubActionDigests"],
+  "schedule": ["before 6am on monday"],
+  "automerge": false,
+  "packageRules": [
+    {
+      "description": "One weekly PR for everything. Third-party pins run code on every teammate's machine: read the upstream diff of hooks, network calls and license before merging.",
+      "matchPackageNames": ["*"],
+      "groupName": "atlas toolchain"
+    }
+  ],
+  "customManagers": [
+    {
+      "customType": "regex",
+      "description": "npx paul-framework@x in the setup skill",
+      "managerFilePatterns": ["/^skills/setup/SKILL\\.md$/"],
+      "matchStrings": ["paul-framework@(?<currentValue>\\d+\\.\\d+\\.\\d+)"],
+      "depNameTemplate": "paul-framework",
+      "datasourceTemplate": "npm"
+    },
+    {
+      "customType": "regex",
+      "description": "github marketplace commit pins in project-settings.json",
+      "managerFilePatterns": ["/^skills/setup/project-settings\\.json$/"],
+      "matchStrings": ["\"repo\": \"(?<depName>[^\"]+)\",\\s*\"ref\": \"(?<currentDigest>[0-9a-f]{40})\""],
+      "currentValueTemplate": "HEAD",
+      "packageNameTemplate": "https://github.com/{{{depName}}}",
+      "datasourceTemplate": "git-refs"
+    },
+    {
+      "customType": "regex",
+      "description": "git url marketplace commit pins in project-settings.json",
+      "managerFilePatterns": ["/^skills/setup/project-settings\\.json$/"],
+      "matchStrings": ["\"url\": \"(?<packageName>https://github\\.com/[^\"]+?)(?:\\.git)?\",\\s*\"ref\": \"(?<currentDigest>[0-9a-f]{40})\""],
+      "currentValueTemplate": "HEAD",
+      "depNameTemplate": "{{{packageName}}}",
+      "datasourceTemplate": "git-refs"
+    }
+  ]
+}

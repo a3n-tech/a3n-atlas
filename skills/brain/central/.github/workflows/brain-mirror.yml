@@ -20,7 +20,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           ref: main
           fetch-depth: 0
@@ -28,9 +28,9 @@ jobs:
       # scoped down to read-only here. GITHUB_TOKEN cannot read other repos.
       - name: Token for reading project repos
         id: reader
-        uses: actions/create-github-app-token@v2
+        uses: actions/create-github-app-token@v3
         with:
-          app-id: ${{ vars.BRAIN_READER_APP_ID }}
+          client-id: ${{ vars.BRAIN_READER_CLIENT_ID }}
           private-key: ${{ secrets.BRAIN_READER_PRIVATE_KEY }}
           owner: ${{ github.repository_owner }}
           permission-contents: read

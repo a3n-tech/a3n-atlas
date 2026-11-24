@@ -14,7 +14,7 @@ cat > "$T/bin/claude" <<'EOF'
 cat >/dev/null
 echo call >> "${CLAUDELOG:-/dev/null}"
 [ -n "${CLAUDE_SIDE:-}" ] && sh -c "$CLAUDE_SIDE"
-printf '=== HANDOFF ===\n### Done\n- x\n=== JOURNAL ===\n- decided y\n=== TITLE ===\nt\n'
+printf '=== HANDOFF ===\n### Done\n- x\n%b=== JOURNAL ===\n- decided y\n=== TITLE ===\nt\n' "${CLAUDE_BLOCKERS:-}"
 EOF
 # gh stub: issue URL is /issues/ unless GH_PR=1; brain repo private; login alice.
 cat > "$T/bin/gh" <<'EOF'
@@ -24,7 +24,11 @@ case "$*" in
   *visibility*) echo PRIVATE ;;
   "api user"*) echo alice ;;
   "issue view"*state,url*) if [ "${GH_PR:-}" = 1 ]; then echo "OPEN https://github.com/acme/app/pull/12"; else echo "OPEN https://github.com/acme/app/issues/12"; fi ;;
+  "issue view"*"--json url -q"*) echo "https://github.com/acme/app/issues/12" ;;
   "issue view"*title*) echo "t" ;;
+  "project view"*) echo "PVT_1" ;;
+  "project item-add"*) echo '{"id":"PVTI_1"}' ;;
+  "project field-list"*) echo '{"fields":[{"id":"F1","name":"Status","options":[{"id":"O_ip","name":"In progress"},{"id":"O_bl","name":"Blocked"}]}]}' ;;
   "pr list"*) echo "" ;;
   "pr create"*) echo "https://github.com/acme/x/pull/9" ;;
   "repo clone"*) exit 1 ;;
@@ -131,5 +135,16 @@ touch "$BC/.git/atlas-private"; git -C "$BC" config remote.origin.url https://gi
 out=$(echo "{\"cwd\":\"$T/app\"}" | HARNESS_CONFIG_DIR="$T/none" node "$H/scripts/session-start.mjs")
 ok "wrong origin: hub not injected" '! printf "%s" "$out" | grep -q "app hub"'
 git -C "$BC" config remote.origin.url https://github.com/acme/brain.git
+
+# 9. Team board: the repo declares its project on the default branch; a handoff with blockers marks the ticket Blocked.
+git -C "$T/app" stash -q -u 2>/dev/null; git -C "$T/app" switch -q main
+printf '<!-- harness:team-rules:start -->\n<!-- atlas:project acme/7 -->\n' > "$T/app/CLAUDE.md"; git -C "$T/app" commit -qam project
+git -C "$T/app" update-ref refs/remotes/origin/main HEAD; git -C "$T/app" switch -q 12-feat
+echo blocked >> "$T/app/f.txt"
+CLAUDE_BLOCKERS='### Blockers / open questions\n- waiting on the payment API key\n' run s9
+ok "blockers: ticket set to Blocked on the board" 'grep -q "item-edit.*single-select-option-id O_bl" "$GHLOG"'
+echo unblocked >> "$T/app/f.txt"
+run s9b
+ok "no blockers: ticket stays In progress" 'grep -q "item-edit.*single-select-option-id O_ip" "$GHLOG"'
 
 echo "pass=$pass fail=$fail"; [ "$fail" = 0 ]

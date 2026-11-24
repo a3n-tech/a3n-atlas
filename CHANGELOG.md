@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.9.0
+
+- Team visibility: a repo can declare its GitHub Project in `CLAUDE.md` (`<!-- atlas:project <owner>/<number> -->`, read from the default branch). Session start puts the ticket on the board as In progress; session end sets Blocked when the handoff lists blockers. Uses the person's own `gh` token (`gh auth refresh -s project` once), no Actions minutes.
+- gitleaks: the session-end WIP scan also runs gitleaks when it is installed, and the brain gate installs a pinned, checksum-verified gitleaks in CI. Both use `.gitleaks.toml` (defaults plus rules for assigned passwords and `sk-` keys). The regex scan still runs.
+- Renovate config (`renovate.json`): weekly grouped PR for the PAUL version, marketplace commit pins and GitHub Actions; never automerged, so third-party pins are reviewed. Needs the Renovate app installed on the repo.
+- `/a3ntech:setup` ends with one checklist and records when setup finishes (`~/.config/atlas/onboarding.log`, local only) so onboarding time can be measured.
+- Per-person settings move to `~/.config/atlas`; `~/.config/a3n-harness` is still read and `/a3ntech:role` moves it.
+- Actions: `actions/checkout` v7 and `actions/create-github-app-token` v3; brain App variables are now `BRAIN_READER_CLIENT_ID` / `BRAIN_DISPATCH_CLIENT_ID` (the App's Client ID).
+- Neutral wording for other orgs in docs and the plugin description.
+
 ## 0.8.1
 
 - Token budget: the team rules block injected into every session is 2,957 characters instead of 6,582 (how the automation works moved to `docs/HARNESS-SETUP.md`); skill descriptions total 1,358 characters instead of 2,770, and the trigger evals still pass 16 of 16 on Sonnet.

@@ -6,7 +6,7 @@ import { join } from "node:path";
 import { readFileSync as rf, existsSync as ex } from "node:fs";
 import { mkdirSync as mk } from "node:fs";
 import { execFileSync as x } from "node:child_process";
-import { issueFromBranch, hasSecret, redact, CONFLICT_RE, isHarnessRepo, SECRET_FILE_RE, repoFromUrl, readRoles, ROLES, parseSections, gitOperationInProgress, handoffEnabled, brainProject, brainRepo, hubRepo } from "./lib.mjs";
+import { issueFromBranch, hasSecret, redact, CONFLICT_RE, isHarnessRepo, SECRET_FILE_RE, repoFromUrl, readRoles, ROLES, parseSections, gitOperationInProgress, handoffEnabled, brainProject, brainRepo, hubRepo, hasBlockers, projectRef } from "./lib.mjs";
 
 assert.equal(issueFromBranch("12-login-form"), 12);
 assert.equal(issueFromBranch("feat/34-checkout"), 34);
@@ -86,3 +86,11 @@ assert.equal(hubRepo("# no frontmatter\nrepo: a/b"), null);
 g("remote", "set-url", "origin", "https://github.com/a3n-tech/brain.git");
 assert.equal(brainProject(d), null); // the brain repo is not a project of itself
 console.log("git state ok");
+
+// Blockers in a handoff decide Blocked vs In progress on the team board.
+assert.equal(hasBlockers("### Done\n- x\n### Blockers / open questions\n- waiting on API key from ops\n"), true);
+assert.equal(hasBlockers("### Done\n- x\n### Blockers / open questions\n- None\n"), false);
+assert.equal(hasBlockers("### Done\n- x\n"), false);
+g("checkout", "-q", "main"); writeFileSync(join(d, "CLAUDE.md"), "x\n<!-- atlas:project acme/7 -->\n"); g("commit", "-qam", "project"); g("update-ref", "refs/remotes/origin/main", "HEAD");
+assert.deepEqual(projectRef(d), { owner: "acme", number: "7" });
+console.log("visibility ok");

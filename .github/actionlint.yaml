@@ -1,0 +1,7 @@
+# actionlint ships an older definition of actions/create-github-app-token: it still requires `app-id`, while v3.4.0's
+# action.yml makes `client-id` the input and marks `app-id` deprecated. Ignore only those two messages.
+paths:
+  skills/brain/central/.github/workflows/*.yml:
+    ignore:
+      - 'input "client-id" is not defined in action "actions/create-github-app-token@v3"'
+      - 'missing input "app-id" which is required by action "actions/create-github-app-token@v3"'

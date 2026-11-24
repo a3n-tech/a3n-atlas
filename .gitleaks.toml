@@ -1,0 +1,14 @@
+# Atlas secret scan rules: gitleaks defaults plus two shapes the defaults missed in testing.
+# Used by the session-end WIP scan (when gitleaks is installed) and copied into each brain repo for its gate.
+[extend]
+useDefault = true
+
+[[rules]]
+id = "atlas-assigned-secret"
+description = "A password, secret, API key or token assigned a literal value"
+regex = '''(?i)\b(?:password|passwd|secret|api[_-]?key|token)\s*[:=]\s*["']?[^\s"']{8,}'''
+
+[[rules]]
+id = "atlas-sk-key"
+description = "sk- style API key"
+regex = '''\bsk-[A-Za-z0-9_-]{20,}'''

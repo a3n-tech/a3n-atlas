@@ -1,6 +1,6 @@
 # Atlas
 
-Atlas is the a3n-tech agentic team toolkit, a Claude Code plugin. It runs the team like a scrum team:
+Atlas is an agentic team toolkit, a Claude Code plugin built by a3n-tech (MIT). It runs the team like a scrum team:
 everyone works from the same brain, the same plugins and the same process, each person in a role.
 
 - **PAUL** owns the horizon: milestones and phases (`.paul/`).
@@ -35,6 +35,17 @@ Set in `/config` or with `claude plugin configure a3ntech@a3n-tech`.
 |---|---|---|
 | `handoff` | on | Session-end WIP commit, push, draft PR and handoff comment. Legacy `HARNESS_HANDOFF=off` still works. |
 | `brain_dir` | empty | Optional: folder that holds one clone per brain. |
+
+## Team board, secret scan, updates
+
+- **Team board:** create one GitHub Project with a Status field (Todo, In progress, Blocked, Done), then add
+  `<!-- atlas:project <owner>/<number> -->` to each repo's `CLAUDE.md` on its default branch. Session start marks the
+  ticket In progress; session end sets Blocked when the handoff lists blockers. Each person runs
+  `gh auth refresh -s project` once.
+- **Secret scan:** install `gitleaks` (`brew install gitleaks`) and the session-end scan uses it with `.gitleaks.toml`
+  on top of the built-in patterns. The brain gate installs a pinned gitleaks in CI.
+- **Updates:** install the Renovate GitHub app on this repo; `renovate.json` opens one weekly PR for the PAUL version,
+  marketplace pins and GitHub Actions. Read the upstream diff (hooks, network calls, license) before merging.
 
 ## Token savers
 

@@ -2,6 +2,7 @@
 import { execFileSync, execFile } from "node:child_process";
 import { appendFileSync, mkdirSync, readFileSync, existsSync, openSync, writeSync, closeSync, rmSync } from "node:fs";
 import { join, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
 import { homedir } from "node:os";
 
 export function sh(cmd, args, opts = {}) {
@@ -43,6 +44,16 @@ const SECRET_RES = [
 ];
 export const SECRET_FILE_RE = /(^|\/)(\.env(\..*)?|.*\.(pem|key|p12|pfx|jks|keystore)|id_(rsa|ed25519|ecdsa)|credentials(\.json)?|\.npmrc|\.netrc)$/i;
 export const hasSecret = (text) => SECRET_RES.some((r) => r.test(text || ""));
+/** gitleaks (when installed) with Atlas's rules: true = leak found, false = clean, null = gitleaks not available.
+ *  Used alongside hasSecret, never instead of it. */
+const GITLEAKS_CONFIG = fileURLToPath(new URL("../.gitleaks.toml", import.meta.url));
+export function gitleaksFinds(text) {
+  try {
+    execFileSync("gitleaks", ["stdin", "-c", GITLEAKS_CONFIG, "--no-banner", "--redact", "--exit-code", "3"],
+      { input: text || "", stdio: ["pipe", "ignore", "ignore"], timeout: 60_000, maxBuffer: 64 * 1024 * 1024 });
+    return false;
+  } catch (e) { return e.status === 3 ? true : null; }
+}
 export const redact = (text) =>
   SECRET_RES.reduce((t, r) => t.replace(new RegExp(r.source, r.flags.includes("g") ? r.flags : r.flags + "g"), "****"), text || "");
 
@@ -79,7 +90,12 @@ export function repoFromUrl(url) {
 }
 
 export const ROLES = ["pmo", "pm", "architect", "frontend", "backend", "fullstack", "devops", "release", "qa"];
-export const configDir = () => process.env.HARNESS_CONFIG_DIR || join(homedir(), ".config", "a3n-harness");
+/** Per-person settings: ~/.config/atlas. The old ~/.config/a3n-harness is still used while it is the only one. */
+export const configDir = () => {
+  if (process.env.HARNESS_CONFIG_DIR) return process.env.HARNESS_CONFIG_DIR;
+  const now = join(homedir(), ".config", "atlas"), old = join(homedir(), ".config", "a3n-harness");
+  return !existsSync(now) && existsSync(old) ? old : now;
+};
 export const rolesFile = () => join(configDir(), "roles");
 /** Personal lenses live only on that person's machine: <config>/lenses/<name>.md. */
 export const personalLens = (name) => join(configDir(), "lenses", `${name}.md`);
@@ -106,14 +122,17 @@ export const originRepo = (root) => repoFromUrl(trySh("git", ["remote", "get-url
  *  declaration means `<owner>/brain` for the project repo's owner. Never a personal setting. */
 // owner/name segments start with a letter or digit, so "." and ".." can never become path segments.
 export const REPO_RE = /^[A-Za-z0-9][\w.-]*\/[A-Za-z0-9][\w.-]*$/;
-const BRAIN_MARK = /^<!--\s*atlas:brain\s+(\S+)\s*-->\s*$/m;
+/** A `<!-- atlas:<key> value -->` line from CLAUDE.md on the remote default branch (reviewed content), never the
+ *  working tree: checking out an unreviewed branch must not change where journals, context or status updates go. */
+export function declared(root, key) {
+  const def = trySh("git", ["symbolic-ref", "--short", "refs/remotes/origin/HEAD"], { cwd: root }) || "origin/main";
+  const text = trySh("git", ["show", `${def}:CLAUDE.md`], { cwd: root }) || "";
+  return new RegExp(`^<!--\\s*atlas:${key}\\s+(\\S+)\\s*-->\\s*$`, "m").exec(text)?.[1] ?? null;
+}
 export function brainRepo(root) {
   if (!root) return null;
-  // Read the declaration from the remote default branch (reviewed content), never the working tree: checking out an
-  // unreviewed branch must not be able to point this repo's journals and context at another brain.
-  const def = trySh("git", ["symbolic-ref", "--short", "refs/remotes/origin/HEAD"], { cwd: root }) || "origin/main";
-  const declared = BRAIN_MARK.exec(trySh("git", ["show", `${def}:CLAUDE.md`], { cwd: root }) || "")?.[1];
-  if (declared) return REPO_RE.test(declared) ? declared : null;
+  const declaredBrain = declared(root, "brain");
+  if (declaredBrain) return REPO_RE.test(declaredBrain) ? declaredBrain : null;
   const owner = originRepo(root)?.split("/")[0];
   return owner ? `${owner}/brain` : null;
 }
@@ -185,4 +204,28 @@ export function acquireLock(path, waitMs = 0) {
       Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 2000);
     }
   }
+}
+
+/** Onboarding timing, kept on this machine only: <config>/onboarding.log, one "<iso> <event> <owner/repo>" line.
+ *  first-seen is written once per repo (first session start); setup-done when /a3ntech:setup finishes. */
+export function recordOnboarding(event, repo) {
+  if (!repo || !/^(first-seen|setup-done)$/.test(event)) return;
+  const file = join(configDir(), "onboarding.log");
+  try {
+    if (event === "first-seen" && existsSync(file) && readFileSync(file, "utf8").includes(` first-seen ${repo}\n`)) return;
+    mkdirSync(configDir(), { recursive: true });
+    appendFileSync(file, `${new Date().toISOString()} ${event} ${repo}\n`);
+  } catch {}
+}
+
+/** The team's GitHub Project for status updates: `<!-- atlas:project <owner>/<number> -->`, or null. */
+export function projectRef(root) {
+  const m = /^([A-Za-z0-9][\w-]*)\/(\d{1,6})$/.exec(declared(root, "project") || "");
+  return m ? { owner: m[1], number: m[2] } : null;
+}
+/** True when a handoff's "Blockers" section lists something real (not empty, not "none"). */
+export function hasBlockers(handoff) {
+  const sec = /^###\s*Blockers[^\n]*\n([\s\S]*?)(?=^###\s|(?![\s\S]))/im.exec(handoff || "")?.[1] || "";
+  return sec.split("\n").map((l) => l.replace(/^[-*\s]+/, "").trim())
+    .some((l) => l && !/^(none|n\/a|nothing|no blockers?)\.?$/i.test(l));
 }

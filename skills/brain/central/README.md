@@ -64,7 +64,7 @@ PRs from a `notes/*` branch that pass the gate merge into main on their own. Upd
 - Reader GitHub App (org-owned, free, no seat; survives people leaving). Create it under the org's Settings,
   Developer settings, GitHub Apps: no webhook; repository permissions Contents read, Issues read, Metadata read;
   "Only on this account". Install it only on the project repos linked in the brain, not on all repos. In this repo set the variable
-  `BRAIN_READER_APP_ID` and the secret `BRAIN_READER_PRIVATE_KEY` (the .pem). The mirror job mints a 1-hour token
+  `BRAIN_READER_CLIENT_ID` (the App's Client ID, shown on its settings page) and the secret `BRAIN_READER_PRIVATE_KEY` (the .pem). The mirror job mints a 1-hour token
   from it; there is nothing to rotate on a schedule. Keep this key only in this repo.
 - Optional Dispatch GitHub App, separate from the Reader App: repository permission Actions write, Metadata read,
   installed on this repo only. Project repos hold its key so a `.paul/` change can start the mirror at once

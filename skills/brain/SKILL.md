@@ -65,7 +65,7 @@ Run inside the project repo. The project name is the GitHub repo name from `orig
    `.github/workflows/brain-mirror.yml`, `.github/workflows/brain-sync.yml`, `scripts/brain-mirror.mjs` if present.
 4. Optional, saves mirror lag: if the org created the Dispatch GitHub App (see the brain repo README), add
    `.github/workflows/brain-notify.yml` so a `.paul/` change starts the brain's mirror at once instead of waiting
-   for the daily run. Repo variable `BRAIN_DISPATCH_APP_ID`, secret `BRAIN_DISPATCH_PRIVATE_KEY`. That App has only
+   for the daily run. Repo variable `BRAIN_DISPATCH_CLIENT_ID` (the App's Client ID), secret `BRAIN_DISPATCH_PRIVATE_KEY`. That App has only
    Actions write on the brain repo, so a leaked key can start the mirror and nothing else. No Dispatch App: skip.
    ```yaml
    name: brain-notify
@@ -76,9 +76,9 @@ Run inside the project repo. The project name is the GitHub repo name from `orig
        timeout-minutes: 2
        steps:
          - id: app
-           uses: actions/create-github-app-token@v2
+           uses: actions/create-github-app-token@v3
            with:
-             app-id: ${{ vars.BRAIN_DISPATCH_APP_ID }}
+             client-id: ${{ vars.BRAIN_DISPATCH_CLIENT_ID }}
              private-key: ${{ secrets.BRAIN_DISPATCH_PRIVATE_KEY }}
              owner: <org>
              repositories: brain

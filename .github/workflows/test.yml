@@ -20,7 +20,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - run: node scripts/selftest.mjs
       - run: node skills/seam/scripts/check-plan-drift.test.mjs
       - run: bash -eo pipefail tests/gate.test.sh
