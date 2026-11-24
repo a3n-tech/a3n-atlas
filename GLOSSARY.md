@@ -16,6 +16,14 @@
 
 **Brain index**: a search index built from the brain store. It can be rebuilt at any time and is never edited by hand.
 
+**Access boundary**: a group of people who may all read the same context. Each boundary has exactly one brain store; everyone inside it reads everything in it.
+
+**Org brain**: the default brain every repo in the org falls back to. It holds team-wide context such as standards, people and glossary.
+
+**Linked repo**: a project repo whose folder has been added to a brain through a reviewed change. Atlas acts only in linked repos.
+
+**Restricted repo**: a linked repo whose own committed config forbids AI session summaries, journal notes and handoff comments, for example because a client contract requires it.
+
 **Handoff**: the note a session leaves on its ticket so the next person or agent continues where it stopped.
 
 **Role lens**: the angle a person works from (PM, architect, frontend, QA and others). It changes focus and tools, never the plan.
