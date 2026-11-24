@@ -20,7 +20,11 @@
 
 **Org brain**: the default brain every repo in the org falls back to. It holds team-wide context such as standards, people and glossary.
 
-**Linked repo**: a project repo whose folder has been added to a brain through a reviewed change. Atlas acts only in linked repos.
+**Team hub**: the brain's root `index.md`. Every session reads it; it changes only through a reviewed PR.
+
+**Project hub**: a project's `index.md` in the brain. It names the project's repo and changes only through a reviewed PR.
+
+**Linked repo**: a project repo whose project hub, added to a brain through a reviewed change, names that exact repo. Atlas writes to the brain only for linked repos.
 
 **Restricted repo**: a linked repo whose own committed config forbids AI session summaries, journal notes and handoff comments, for example because a client contract requires it.
 

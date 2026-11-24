@@ -1,6 +1,12 @@
 // node scripts/selftest.mjs — pure-logic checks, no network.
 import assert from "node:assert/strict";
-import { issueFromBranch, hasSecret, redact, CONFLICT_RE } from "./lib.mjs";
+import { mkdtempSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+import { readFileSync as rf, existsSync as ex } from "node:fs";
+import { mkdirSync as mk } from "node:fs";
+import { execFileSync as x } from "node:child_process";
+import { issueFromBranch, hasSecret, redact, CONFLICT_RE, isHarnessRepo, SECRET_FILE_RE, repoFromUrl, readRoles, ROLES, parseSections, gitOperationInProgress, handoffEnabled, brainProject, brainRepo, hubRepo } from "./lib.mjs";
 
 assert.equal(issueFromBranch("12-login-form"), 12);
 assert.equal(issueFromBranch("feat/34-checkout"), 34);
@@ -16,32 +22,23 @@ assert.ok(!redact("key sk-" + "x".repeat(30)).includes("xxxx"));
 assert.ok(CONFLICT_RE.test("a\n<<<<<<< HEAD\nb"));
 assert.ok(!CONFLICT_RE.test("a <<<<<<< inline"));
 console.log("selftest ok");
-import { isHarnessRepo } from "./lib.mjs";
-import { mkdtempSync, writeFileSync } from "node:fs";
-import { tmpdir } from "node:os";
-import { join } from "node:path";
 const d = mkdtempSync(join(tmpdir(), "hx-"));
 assert.ok(!isHarnessRepo(d));
 writeFileSync(join(d, "CLAUDE.md"), "x\n<!-- harness:team-rules:start — managed -->\n");
 assert.ok(isHarnessRepo(d));
-import { SECRET_FILE_RE } from "./lib.mjs";
 for (const f of [".env", "app/.env.local", "certs/server.pem", "id_rsa", "credentials.json", ".npmrc"]) assert.ok(SECRET_FILE_RE.test(f), f);
 for (const f of ["src/env.ts", "keyboard.tsx", "docs/credentials-guide.md", "README.md"]) assert.ok(!SECRET_FILE_RE.test(f), f);
 console.log("gate ok");
-import { repoFromUrl } from "./lib.mjs";
 assert.equal(repoFromUrl("https://github.com/a3n-tech/dhaka-topi-events.git"), "a3n-tech/dhaka-topi-events");
 assert.equal(repoFromUrl("git@github.com:a3n-tech/harness.git"), "a3n-tech/harness");
 assert.equal(repoFromUrl("https://gitlab.com/x/y.git"), null);
 assert.equal(repoFromUrl(null), null);
 console.log("repo ok");
-import { readRoles, ROLES } from "./lib.mjs";
-import { readFileSync as rf, existsSync as ex } from "node:fs";
 const rf2 = join(d, "roles"); writeFileSync(rf2, "Frontend, qa\nnope  backend frontend");
 assert.deepEqual(readRoles(rf2), ["frontend", "qa", "backend"]);
 assert.deepEqual(readRoles(join(d, "missing")), []);
 for (const r of ROLES) assert.ok(ex(new URL(`../roles/${r}.md`, import.meta.url)), `lens ${r}`);
 console.log("roles ok");
-import { mkdirSync as mk } from "node:fs";
 process.env.HARNESS_CONFIG_DIR = d; mk(join(d, "lenses"), { recursive: true });
 writeFileSync(join(d, "lenses", "lead.md"), "# lead");
 writeFileSync(rf2, "lead ../etc/passwd ghost frontend");
@@ -52,7 +49,6 @@ for (const b of ["hotfix/500-error", "release/2026-11", "renovate/node-18", "v2-
 assert.equal(issueFromBranch("fix/7_crash"), 7);
 assert.equal(issueFromBranch("feature/42-login"), 42);
 assert.equal(issueFromBranch("bugfix/9-x"), 9);
-import { parseSections, gitOperationInProgress, handoffEnabled, brainProject, brainRepo, hubRepo } from "./lib.mjs";
 assert.deepEqual(parseSections("noise\n=== HANDOFF ===\n- a \"q\"\n=== JOURNAL ===\n\n=== TITLE ===\nslug\n"),
   { handoff: '- a "q"', journal: "", title: "slug" });
 assert.deepEqual(parseSections("garbage"), { handoff: "", journal: "", title: "" });
@@ -63,7 +59,6 @@ for (const [v, on] of [[undefined, true], ["true", true], ["false", false], ["of
 delete process.env.CLAUDE_PLUGIN_OPTION_HANDOFF;
 console.log("parse/options ok");
 // Merge in progress is detected; project name comes from origin.
-import { execFileSync as x } from "node:child_process";
 const g = (...a) => x("git", a, { cwd: d, stdio: "pipe" });
 g("init", "-q", "-b", "main"); g("config", "user.email", "t@t"); g("config", "user.name", "t");
 writeFileSync(join(d, "f"), "a\n"); g("add", "f"); g("commit", "-qm", "a");
@@ -75,6 +70,9 @@ assert.equal(gitOperationInProgress(d), "MERGE_HEAD");
 g("remote", "add", "origin", "git@github.com:a3n-tech/shop-api.git");
 assert.equal(brainProject(d), "shop-api");
 assert.equal(brainRepo(d), "a3n-tech/brain"); // default brain: <owner>/brain of the project repo
+writeFileSync(join(d, "CLAUDE.md"), "x\n<!-- atlas:brain other-org/team-brain -->\n");
+assert.equal(brainRepo(d), "other-org/team-brain"); // declared in committed CLAUDE.md
+writeFileSync(join(d, "CLAUDE.md"), "x\n");
 // Linking is checked by the hub's `repo:` line (linkedHub), so a same-name repo elsewhere maps to a folder name only.
 assert.equal(hubRepo("---\ntype: project-hub\nrepo: a3n-tech/shop-api\n---\n# x"), "a3n-tech/shop-api");
 assert.equal(hubRepo("---\nrepo: REPLACE-WITH-OWNER/REPO-NAME\n---"), "REPLACE-WITH-OWNER/REPO-NAME");

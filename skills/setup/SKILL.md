@@ -1,6 +1,6 @@
 ---
 name: setup
-description: Onboard a repo or a teammate onto Atlas, the a3n-tech agentic team toolkit. Installs PAUL, pins the repo-level plugins (ponytail, caveman) in .claude/settings.json, writes the team rules into CLAUDE.md, wires the AI merge driver, links the repo to the central brain, reviews CI cost, then walks through /paul:init and /a3ntech:seam. Use this whenever someone says set up / initialize / install Atlas (or the harness), onboard this repo, get me set up on this project, start a new team repo, or when a repo has no .paul/ or no team rules block in CLAUDE.md, even if they never say "Atlas". Not for planning a phase (/paul:plan) or toggling a single plugin.
+description: Onboard a repo or a teammate onto Atlas, the a3n-tech agentic team toolkit. Installs PAUL, pins the repo-level plugins (ponytail, caveman) in .claude/settings.json, writes the team rules into CLAUDE.md, wires the AI merge driver, links the repo to the brain, reviews CI cost, then walks through /paul:init and /a3ntech:seam. Use this whenever someone says set up / initialize / install Atlas (or the harness), onboard this repo, get me set up on this project, start a new team repo, or when a repo has no .paul/ or no team rules block in CLAUDE.md, even if they never say "Atlas". Not for planning a phase (/paul:plan) or toggling a single plugin.
 ---
 
 # Atlas setup
@@ -106,7 +106,7 @@ Ensure `.gitattributes` contains (append missing lines, never duplicate):
 The session-start hook registers the `paul-ai` driver in each clone automatically; it asks
 Claude to merge both sides of a `.paul/` conflict and falls back to `/a3ntech:sync`.
 
-Session-end posts ticket handoffs to the issue and writes the session journal to the central brain.
+Session-end posts ticket handoffs to the issue and writes the session journal to the brain.
 
 Tell the person once, plainly: on a ticket branch, ending a session **commits WIP, pushes the
 branch, opens a draft PR and comments a handoff on the issue**. Ticket branches are `<N>-slug`,
@@ -143,10 +143,10 @@ rules where the ticket skills read them: in `docs/agents/triage-labels.md`, repl
 other tracker — the labels are the concept; `docs/agents/issue-tracker.md` says how to apply them. Then ask the person
 which role(s) they hold and run `/a3ntech:role` — roles are per machine, never committed.
 
-## 4c. Central brain
+## 4c. Brain
 
-Link the repo to the central brain with `/a3ntech:brain`. It creates `projects/<repo-name>/` in
-`a3n-tech/brain` (bootstrapping the brain repo if the org has none yet) and migrates any old
+Link the repo to the brain with `/a3ntech:brain`. It creates `projects/<repo-name>/` in
+the brain repo (bootstrapping it if the org has none yet; the repo's own `CLAUDE.md` declares it with a line `<!-- atlas:brain <owner>/<name> -->` (outside the managed rules block); without that line it is `<owner>/brain` for the repo's owner) and migrates any old
 per-repo `brain/` folder. Do not copy brain workflows into the project repo.
 
 ## 4d. Migrations (existing repos; each step is a no-op when already clean)

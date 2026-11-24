@@ -1,6 +1,6 @@
 ---
 type: project-hub
-repo: REPLACE-WITH-OWNER/REPO-NAME
+repo: <owner>/<repo-name>
 tags: [brain, project]
 ---
 

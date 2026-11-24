@@ -32,7 +32,7 @@ esac
 EOF
 chmod +x "$T/bin/"*
 for i in 1 2 3 4; do echo '{"type":"user","message":{"content":"hi"}}' >> "$T/tr.jsonl"; done
-export PATH="$T/bin:$PATH" GHLOG="$T/gh.log" CLAUDE_PLUGIN_DATA="$T/data" HARNESS_BRAIN_REPO=acme/brain HARNESS_BRAIN_DIR="$T/brainclone"
+export PATH="$T/bin:$PATH" GHLOG="$T/gh.log" CLAUDE_PLUGIN_DATA="$T/data" HARNESS_BRAIN_DIR="$T/brains"
 
 # Project repo with a bare push remote; origin url looks like github so repoFromUrl works.
 git init -q --bare -b main "$T/app.git"
@@ -46,7 +46,12 @@ git checkout -qb 12-feat
 git init -q --bare -b main "$T/brain.git"
 git clone -q "$T/brain.git" "$T/seed" 2>/dev/null; cd "$T/seed"; git config user.email a@a; git config user.name a
 echo "# team hub" > index.md; mkdir -p projects/app; printf -- "---\ntype: project-hub\nrepo: acme/app\n---\n# app hub\n" > projects/app/index.md; git add -A; git commit -qm init; git push -q origin HEAD:main
-git clone -q "$T/brain.git" "$T/brainclone"; git -C "$T/brainclone" config user.email a@a; git -C "$T/brainclone" config user.name a
+# The clone claims origin https://github.com/acme/brain (what Atlas checks); insteadOf makes git use the local bare repo.
+BC="$T/brains/acme/brain"; mkdir -p "$T/brains/acme"; git clone -q "$T/brain.git" "$BC"
+git -C "$BC" config user.email a@a; git -C "$BC" config user.name a
+git -C "$BC" config remote.origin.url https://github.com/acme/brain.git
+git -C "$BC" config url."$T/brain.git".insteadOf https://github.com/acme/brain.git
+touch "$BC/.git/atlas-private"   # what brain-pull writes after GitHub confirms the brain is private
 cd "$T/app"
 
 run() { mkdir -p "$T/harness-handoff-x"; echo "{\"cwd\":\"$T/app\",\"transcript_path\":\"$T/tr.jsonl\",\"session_id\":\"$1\"}" > "$T/harness-handoff-x/payload.json"; : > "$GHLOG"; node "$H/scripts/handoff-worker.mjs" "$T/harness-handoff-x/payload.json"; }
@@ -88,7 +93,7 @@ run s5
 ok "journal pushed as notes/alice/<session>" 'git --git-dir="$T/brain.git" for-each-ref --format="%(refname)" refs/heads/notes/alice | grep -q s5'
 ok "journal file under projects/app/journal" 'git --git-dir="$T/brain.git" ls-tree -r --name-only refs/heads/notes/alice/s5 | grep -q "^projects/app/journal/.*s5.md$"'
 ok "journal PR opened with person token" 'grep -q "pr create -R acme/brain --base main --head notes/alice/s5" "$GHLOG"'
-ok "brain clone still on clean main" '[ "$(git -C "$T/brainclone" branch --show-current)" = main ] && [ -z "$(git -C "$T/brainclone" status --porcelain)" ]'
+ok "brain clone still on clean main" '[ "$(git -C "$BC" branch --show-current)" = main ] && [ -z "$(git -C "$BC" status --porcelain)" ]'
 
 # 6. Unlinked project: no journal.
 git remote set-url origin https://github.com/acme/other.git
@@ -98,14 +103,26 @@ git remote set-url origin https://github.com/acme/app.git
 
 # 6b. Same repo name under another owner: the hub's repo: line does not match, so no journal.
 git remote set-url origin https://github.com/someone-else/app.git
-HARNESS_BRAIN_REPO=acme/brain run s6b
+run s6b
 ok "other owner, same name: no journal" '! git --git-dir="$T/brain.git" for-each-ref refs/heads/notes/alice | grep -q s6b'
 git remote set-url origin https://github.com/acme/app.git
 
 # 7. Session start reads hubs from origin/main, not the working tree.
-echo "# EVIL unreviewed hub" > "$T/brainclone/projects/app/index.md"
+echo "# EVIL unreviewed hub" > "$BC/projects/app/index.md"
 out=$(echo "{\"cwd\":\"$T/app\"}" | HARNESS_CONFIG_DIR="$T/none" node "$H/scripts/session-start.mjs")
 ok "hub from origin/main" 'printf "%s" "$out" | grep -q "app hub"'
 ok "working-tree edit not injected" '! printf "%s" "$out" | grep -q EVIL'
+
+# 8. A clone whose origin is not the brain, or without the private stamp, is never used.
+# Wait for the brain-pull that session start spawned in the background, so it cannot re-stamp the clone mid-test.
+for _ in $(seq 1 50); do ls "$T/data"/brain-pull-*.lock >/dev/null 2>&1 || break; perl -e "select(undef,undef,undef,0.2)"; done
+git -C "$BC" checkout -q -- projects/app/index.md
+rm "$BC/.git/atlas-private"
+run s8
+ok "no private stamp: no journal" '! git --git-dir="$T/brain.git" for-each-ref refs/heads/notes/alice | grep -q s8'
+touch "$BC/.git/atlas-private"; git -C "$BC" config remote.origin.url https://github.com/evil/brain.git
+out=$(echo "{\"cwd\":\"$T/app\"}" | HARNESS_CONFIG_DIR="$T/none" node "$H/scripts/session-start.mjs")
+ok "wrong origin: hub not injected" '! printf "%s" "$out" | grep -q "app hub"'
+git -C "$BC" config remote.origin.url https://github.com/acme/brain.git
 
 echo "pass=$pass fail=$fail"; [ "$fail" = 0 ]

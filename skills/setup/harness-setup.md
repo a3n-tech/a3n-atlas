@@ -30,7 +30,7 @@ work with Claude Code. Source and changelog: [a3n-tech/a3n-atlas](https://github
    repo is wired. **Restart Claude Code** after it installs anything.
 
 Per-person options (`/config` or `claude plugin configure a3ntech@a3n-tech`): `handoff` (on by default),
-`brain_repo` (default `a3n-tech/brain`), `brain_dir` (optional: your own clone of the brain repo).
+`brain_dir` (optional: folder that holds one clone per brain). Which brain a repo uses is not a personal setting: the repo's own `CLAUDE.md` declares it with a line `<!-- atlas:brain <owner>/<name> -->` (outside the managed rules block); without that line it is `<owner>/brain` for the repo's owner.
 
 ## 1b. Set your role (once)
 
@@ -55,7 +55,7 @@ npm run check:plan            before merging anything touching .paul/ or closing
 ```
 
 **Branch names matter.** Start every ticket branch with the issue number (`12-hero-section`,
-`issue-12`, `gh-12`, `feat/12-hero`; types: feat, fix, chore, docs, refactor, test, perf, ci, build, style). That's how the hooks find the ticket. Never commit to `main`.
+`issue-12`, `gh-12`, `feat/12-hero`; types: feat, feature, fix, bugfix, chore, docs, refactor, test, perf, ci, build, style, task, story). That's how the hooks find the ticket. Never commit to `main`.
 
 **Human-only tasks** (API keys, accounts, DNS, registrations, approvals) are GitHub issues labelled
 `ready-for-human`, assigned to whoever owns them. Agents only take `ready-for-agent`. Never paste a secret
@@ -67,7 +67,7 @@ into an issue — store it with `wrangler secret` or the password manager and cl
 |---|---|---|
 | You open a session on a ticket branch | The latest teammate handoff for that issue is loaded into context | Issue comments marked *Session handoff* |
 | You end a session on a ticket branch | WIP committed, branch pushed, draft PR opened, handoff comment posted (done / in progress / next / blockers) | The issue and its draft PR |
-| Any session ends | Decisions and gotchas saved as one note per session | `projects/<repo>/journal/` in the central brain |
+| Any session ends | Decisions and gotchas saved as one note per session | `projects/<repo>/journal/` in the brain |
 | Two people edit `.paul/` | AI merge driver merges both sides | `git log` |
 | A conflict survives | Next session tells Claude to run `/a3ntech:sync` | — |
 
@@ -81,9 +81,9 @@ into an issue — store it with `wrangler secret` or the password manager and cl
   `[skip ci]`, and your staging is never changed.
 - Opt out of the session-end automation: turn off the `handoff` option (legacy `HARNESS_HANDOFF=off` still works).
 
-## 4. Central brain
+## 4. Brain
 
-Team context lives in one org repo, `a3n-tech/brain`, with a folder per project at `projects/<repo-name>/`:
+Team context lives in one private brain repo (default `<owner>/brain`), with a folder per project at `projects/<repo-name>/`:
 decisions, design, research, meetings, session journals, and read-only mirrors of the plan and open tickets.
 The plugin keeps a local clone current at session start, and Claude reads the team hub and this project's hub.
 Nothing to set up per repo: `/a3ntech:brain` links it (once).

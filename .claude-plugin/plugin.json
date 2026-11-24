@@ -2,7 +2,7 @@
   "name": "a3ntech",
   "displayName": "Atlas",
   "version": "0.8.0",
-  "description": "Atlas, the a3n-tech agentic team toolkit: PAUL owns milestones and phases, the mattpocock skills own tickets, a central brain repo holds team context, and session hooks hand work between people. /a3ntech:setup bootstraps a repo.",
+  "description": "Atlas, the a3n-tech agentic team toolkit: PAUL owns milestones and phases, the mattpocock skills own tickets, a brain repo holds team context, and session hooks hand work between people. /a3ntech:setup bootstraps a repo.",
   "author": {
     "name": "a3n-tech",
     "url": "https://github.com/a3n-tech"
@@ -30,15 +30,10 @@
       "description": "On a ticket branch, end of session commits WIP, pushes, opens a draft PR and comments a handoff on the issue (private repos only). Turn off to keep everything local.",
       "default": true
     },
-    "brain_repo": {
-      "type": "string",
-      "title": "Central brain repo",
-      "description": "owner/name of the brain repo. Empty means <owner>/brain for the project repo's owner."
-    },
     "brain_dir": {
       "type": "directory",
-      "title": "Brain clone folder",
-      "description": "Optional. Your own clone of the brain repo. Empty uses the plugin data folder."
+      "title": "Brain clones folder",
+      "description": "Optional. Folder that holds one clone per brain (<folder>/<owner>/<name>). Empty uses the plugin data folder."
     }
   },
   "network": {

@@ -15,6 +15,7 @@ const NAME_RE = /^[A-Za-z0-9._-]+$/;
 const changed = [];
 let warnings = 0;
 
+// Own tiny wrapper, not the plugin's lib.mjs: this script is copied into the brain repo and runs there alone in CI.
 const gh = (args) => execFileSync("gh", args, { encoding: "utf8", stdio: ["ignore", "pipe", "pipe"], maxBuffer: 32 * 1024 * 1024 });
 const warn = (m) => { warnings++; console.log(`::warning::brain-mirror: ${m}`); };
 
@@ -30,6 +31,10 @@ const cell = (s) => "`" + String(s ?? "").replace(/[`\r\n]/g, " ").replace(/\|/g
 // The repo to mirror comes from the hub's own frontmatter (`repo: owner/name`), which only changes through a reviewed
 // PR. The brain can live under any account; nothing assumes the projects share its owner.
 const REPO_RE = /^[A-Za-z0-9-]+\/[A-Za-z0-9._-]+$/;
+// Owners whose repos this brain may mirror: repo variable BRAIN_PROJECT_OWNERS (comma-separated), default the
+// brain's own owner. A reviewed hub naming any other owner is skipped, so the Reader App is never pointed elsewhere.
+const OWNERS = (process.env.BRAIN_PROJECT_OWNERS || process.env.GITHUB_REPOSITORY_OWNER || "")
+  .split(",").map((o) => o.trim().toLowerCase()).filter(Boolean);
 function hubRepo(text) {
   const fm = /^---\n([\s\S]*?)\n---/.exec(text)?.[1] || "";
   return /^repo:\s*["']?([^\s"']+)["']?\s*$/m.exec(fm)?.[1] || null;
@@ -81,7 +86,7 @@ function mirrorTickets(repo, name) {
 }
 
 if (!existsSync(PROJECTS)) {
-  console.error("brain-mirror: no projects/ here. Run from the root of the central brain repo.");
+  console.error("brain-mirror: no projects/ here. Run from the root of the brain repo.");
   process.exit(2);
 }
 for (const name of readdirSync(PROJECTS)) {
@@ -92,7 +97,8 @@ for (const name of readdirSync(PROJECTS)) {
   const hubFile = join(PROJECTS, name, "index.md");
   if (!existsSync(hubFile) || !lstatSync(hubFile).isFile()) { warn(`skipping ${name}: no index.md (link the project with a reviewed PR)`); continue; }
   const repo = hubRepo(readFileSync(hubFile, "utf8"));
-  if (!repo || !REPO_RE.test(repo)) { warn(`skipping ${name}: index.md has no valid "repo: owner/name" line`); continue; }
+  if (!repo || !REPO_RE.test(repo) || /REPLACE-WITH/i.test(repo)) { warn(`skipping ${name}: index.md has no valid "repo: owner/name" line`); continue; }
+  if (!OWNERS.includes(repo.split("/")[0].toLowerCase())) { warn(`skipping ${name}: owner of ${repo} is not in BRAIN_PROJECT_OWNERS`); continue; }
   for (const [what, fn] of [["plan", mirrorPlan], ["tickets", mirrorTickets]]) {
     try { fn(repo, name); }
     catch (e) { warn(`${name} ${what} failed: ${String(e.stderr || e.message).trim().split("\n")[0]}`); }

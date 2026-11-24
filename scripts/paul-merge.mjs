@@ -1,4 +1,4 @@
-// git merge driver for .paul/** and brain/**: `node paul-merge.mjs %O %A %B %P`.
+// git merge driver for .paul/**: `node paul-merge.mjs %O %A %B %P`.
 // Asks Claude to merge both sides' intent. Writes the result to %A and exits 0.
 // On any doubt exits 1, which leaves a normal conflict for /a3ntech:sync.
 import { readFileSync, writeFileSync, existsSync } from "node:fs";

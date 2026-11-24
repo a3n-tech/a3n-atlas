@@ -76,7 +76,9 @@ PRs from a `notes/*` branch that pass the gate merge into main on their own. Upd
 1. Copy `project-template/` to `projects/<repo>/`. The folder name must equal the repo name.
 2. Edit `projects/<repo>/index.md` and add a link under Projects in the root `index.md`.
 3. Open a PR and get it reviewed.
-4. Make sure the Reader App is installed on the new repo (skip if it is installed on all repos).
+4. Add the new repo to this brain's Reader App installation (only repos in this access boundary, never "all
+   repositories"). If the repo's owner differs from this brain's owner, add that owner to the repo variable
+   `BRAIN_PROJECT_OWNERS` (comma-separated); the mirror skips any other owner.
 5. Optional: with the Dispatch App, add `brain-notify.yml` to the project repo (see `/a3ntech:brain`) so a
    `.paul/` change refreshes the mirror at once. Otherwise `brain-mirror` runs daily at 06:17 UTC and pulls `.paul/*.md` and open issues.
 

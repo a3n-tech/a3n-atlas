@@ -7,7 +7,7 @@ everyone works from the same brain, the same plugins and the same process, each 
 - **mattpocock engineering skills** own the slice: ticket, red/green, diff (GitHub issues).
 - **`check:plan`** catches orphaned agent-ready tickets and phases that claim completion over an open ticket.
 - **Roles** (`/a3ntech:role`) change a person's focus and tools, never the plan.
-- **Central brain** (`a3n-tech/brain`) holds team context for every project.
+- **Brain** (default `<owner>/brain`) holds team context for every project.
 
 ## Install (once per person)
 
@@ -34,8 +34,7 @@ Set in `/config` or with `claude plugin configure a3ntech@a3n-tech`.
 | Option | Default | What |
 |---|---|---|
 | `handoff` | on | Session-end WIP commit, push, draft PR and handoff comment. Legacy `HARNESS_HANDOFF=off` still works. |
-| `brain_repo` | `<owner>/brain` | The brain repo. Empty means `<owner>/brain` for the project repo's owner. |
-| `brain_dir` | empty | Optional: your own clone of the brain repo. |
+| `brain_dir` | empty | Optional: folder that holds one clone per brain. |
 
 ## Token savers
 
@@ -54,15 +53,15 @@ In the repo, run `/a3ntech:setup`. It:
 4. writes the team rules into `CLAUDE.md`, a short pointer into `README.md` (marker-managed) and the setup guide into `docs/HARNESS-SETUP.md`,
 5. adds `.paul/** merge=paul-ai` to `.gitattributes`,
 6. reviews `.github/workflows/*` for CI cost and proposes fixes (see CI budget),
-7. links the repo to the central brain with `/a3ntech:brain`,
+7. links the repo to the brain with `/a3ntech:brain`,
 8. walks you through `/paul:init`, then `/mattpocock-skills:setup-matt-pocock-skills` (you type this one;
    agents can't), then `/a3ntech:seam`.
 
 Commit the result so the rest of the team gets it.
 
-## Central brain
+## Brain
 
-One org repo, `a3n-tech/brain`, with `projects/<repo-name>/` per project. At session start the plugin keeps a
+One repo of notes with `projects/<repo-name>/` per project. Which brain a repo uses is committed config: the repo's own `CLAUDE.md` declares it with a line `<!-- atlas:brain <owner>/<name> -->` (outside the managed rules block); without that line it is `<owner>/brain` for the repo's owner. Brains must be private or internal. At session start the plugin keeps a
 local clone current in the background and injects the team hub and the project hub. Session journals go to
 `projects/<repo>/journal/`, each as its own branch `notes/<github-login>/<session>` and PR, and the brain's CI gate auto-merges
 plain notes. `/a3ntech:brain` bootstraps the brain repo (once per org), links a project repo, and migrates an
@@ -74,7 +73,7 @@ old per-repo `brain/` folder. Details: `skills/brain/central/README.md`.
 |---|---|
 | `.paul/STATE.md` edited by two people | `paul-ai` git merge driver asks Claude to merge both sides; leftovers go to `/a3ntech:sync`; `check:plan` fails on markers |
 | Someone stops mid-ticket | SessionEnd: WIP commit (secret-scanned, `[skip ci]`), push, draft PR, AI handoff comment on the issue. SessionStart loads it for the next person |
-| Team context | Central brain: local clone kept current at session start; hubs injected; journals pushed to the person's `notes/` branch |
+| Team context | Brain: local clone kept current at session start; hubs injected; journals pushed as `notes/<login>/<session>` branches with PRs |
 | Who works on what | `role:<id>` label on every ticket; the session lists your role's queue |
 
 The handoff only runs on ticket branches (`<N>-slug`, `issue-<N>`, `gh-<N>`, `<type>/<N>-slug`) with an open issue,
@@ -115,8 +114,8 @@ Change rules in `skills/setup/team-rules.md`, bump `version` in `.claude-plugin/
 | `skills/seam/` | `/a3ntech:seam`: Execution Seam and drift checker |
 | `skills/sync/` | `/a3ntech:sync`: AI conflict resolution |
 | `skills/role/` | `/a3ntech:role`: per-person role lens at session start (`roles/*.md`) |
-| `skills/brain/` | `/a3ntech:brain`: central brain bootstrap, link and migrate |
-| `skills/brain/central/` | files for the `a3n-tech/brain` repo: hubs, project template, gate and mirror scripts |
+| `skills/brain/` | `/a3ntech:brain`: brain bootstrap, link and migrate |
+| `skills/brain/central/` | files for a brain repo: hubs, project template, gate and mirror scripts |
 | `hooks/hooks.json`, `scripts/` | SessionStart/SessionEnd automation, brain pull, AI merge driver |
 | `skills/seam/scripts/check-plan-drift.mjs` | the drift checker (read-only, needs `gh`) |
 | `skills/setup/team-rules.md` | team rules block for `CLAUDE.md` |

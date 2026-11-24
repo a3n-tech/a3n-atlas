@@ -9,7 +9,7 @@
   "plugins": [
     {
       "name": "a3ntech",
-      "description": "Atlas: PAUL phases + mattpocock ticket skills, central brain, session handoffs, roles and a plan drift check for the a3n-tech team.",
+      "description": "Atlas: PAUL phases + mattpocock ticket skills, brain, session handoffs, roles and a plan drift check for the a3n-tech team.",
       "source": "./",
       "category": "productivity"
     }

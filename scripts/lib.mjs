@@ -35,9 +35,10 @@ export function gitOperationInProgress(root) {
 }
 
 // shortcut: regex scan only, catches common token shapes; upgrade to gitleaks if the team adopts it.
+// Keep in sync with the pattern in skills/brain/central/scripts/gate.sh (bash there, so it cannot import this).
 const SECRET_RES = [
   /\bgh[pousr]_[A-Za-z0-9]{20,}/, /\bgithub_pat_[A-Za-z0-9_]{20,}/, /\bsk-[A-Za-z0-9_-]{20,}/,
-  /\bAKIA[0-9A-Z]{16}\b/, /\bxox[abpors]-[A-Za-z0-9-]{10,}/, /-----BEGIN [A-Z ]*PRIVATE KEY-----/,
+  /\bAKIA[0-9A-Z]{16}\b/, /\bsk_(?:live|test)_[A-Za-z0-9]{10,}/, /\bxox[abpors]-[A-Za-z0-9-]{10,}/, /-----BEGIN [A-Z ]*PRIVATE KEY-----/,
   /\bAIza[0-9A-Za-z_-]{35}\b/, /\b(?:password|passwd|secret|api[_-]?key|token)\s*[:=]\s*["']?[^\s"']{8,}/i,
 ];
 export const SECRET_FILE_RE = /(^|\/)(\.env(\..*)?|.*\.(pem|key|p12|pfx|jks|keystore)|id_(rsa|ed25519|ecdsa)|credentials(\.json)?|\.npmrc|\.netrc)$/i;
@@ -97,17 +98,39 @@ const opt = (k) => process.env[`CLAUDE_PLUGIN_OPTION_${k}`];
 /** Session-end handoff: on unless the person turned it off (plugin option, or legacy HARNESS_HANDOFF=off). */
 export const handoffEnabled = () => !/^(false|off|0|no)$/i.test(opt("HANDOFF") ?? "") && process.env.HARNESS_HANDOFF !== "off";
 
-// ---- Brain: one repo of markdown (default <owner>/brain, from the project repo's owner), one folder per project.
+// ---- Brain: one repo of markdown notes (the brain store), one folder per project.
 /** owner/name of this repo's origin on GitHub, or null. */
 export const originRepo = (root) => repoFromUrl(trySh("git", ["remote", "get-url", "origin"], { cwd: root }));
-/** The brain repo: the plugin option or env if set, otherwise <owner>/brain for the project repo's owner. */
+/** The brain repo for a project repo. Declared in its committed CLAUDE.md as `<!-- atlas:brain owner/name -->` (outside
+ *  the managed rules block, so setup never overwrites it; changing it goes through that repo's PR review). No
+ *  declaration means `<owner>/brain` for the project repo's owner. Never a personal setting. */
+const BRAIN_MARK = /^<!--\s*atlas:brain\s+([\w.-]+\/[\w.-]+)\s*-->\s*$/m;
 export function brainRepo(root) {
-  const r = (opt("BRAIN_REPO") || process.env.HARNESS_BRAIN_REPO || "").trim();
-  if (r) return /^[\w.-]+\/[\w.-]+$/.test(r) ? r : null;
-  const owner = root && originRepo(root)?.split("/")[0];
+  if (!root) return null;
+  let declared = null;
+  try { declared = BRAIN_MARK.exec(readFileSync(join(root, "CLAUDE.md"), "utf8"))?.[1] ?? null; } catch {}
+  if (declared) return declared;
+  const owner = originRepo(root)?.split("/")[0];
   return owner ? `${owner}/brain` : null;
 }
-export const brainDir = () => opt("BRAIN_DIR") || process.env.HARNESS_BRAIN_DIR || join(dataDir(), "brain");
+/** Folder that holds one clone per brain: <base>/<owner>/<name>. Separate clones, so one brain can never stand in
+ *  for another. */
+export const brainBase = () => opt("BRAIN_DIR") || process.env.HARNESS_BRAIN_DIR || join(dataDir(), "brains");
+export const brainDir = (repo) => join(brainBase(), ...repo.toLowerCase().split("/"));
+export const PRIVATE_STAMP = "atlas-private"; // written into the clone's .git by brain-pull after a visibility check
+/** The local clone of `repo`, only if its configured origin really is `repo` and brain-pull last saw it private or
+ *  internal. Anything else (no clone, another remote, a public brain) returns null and nothing is read or written. */
+export function brainClone(repo) {
+  if (!repo) return null;
+  const dir = brainDir(repo);
+  if (!existsSync(join(dir, ".git", PRIVATE_STAMP))) return null;
+  // Raw config value, not `remote get-url`: insteadOf rewrites must not change which repo this claims to be.
+  const origin = repoFromUrl(trySh("git", ["config", "--get", "remote.origin.url"], { cwd: dir }));
+  return origin && origin.toLowerCase() === repo.toLowerCase() ? dir : null;
+}
+/** Private or internal on GitHub (gh). Anything else, including an error, is treated as public. */
+export const isPrivateRepo = (repo, opts = {}) =>
+  ["PRIVATE", "INTERNAL"].includes(trySh("gh", ["repo", "view", repo, "--json", "visibility", "-q", ".visibility"], opts));
 /** Folder name for this repo in the brain: the GitHub repo name. Never the brain repo itself. */
 export function brainProject(root) {
   const repo = originRepo(root);

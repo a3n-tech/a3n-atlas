@@ -1,11 +1,11 @@
 ---
 name: brain
-description: Set up or use the team's central brain — one git repo (default a3n-tech/brain) that holds shared context for every project, one folder per repo (projects/<repo>/) with decisions, glossary, design, research, meetings, people, session journal and generated plan/ticket mirrors. Use this to bootstrap the brain repo for the org, link a project repo to it, migrate an old per-repo brain/ folder into it, or when someone says set up the brain, shared notes, second brain, team knowledge base, project context, "where do decisions live", even if they don't say "brain". Not for personal notes or a personal vault.
+description: Set up or use the team's brain — one git repo (default <owner>/brain) that holds shared context for every project, one folder per repo (projects/<repo>/) with decisions, glossary, design, research, meetings, people, session journal and generated plan/ticket mirrors. Use this to bootstrap the brain repo for the org, link a project repo to it, migrate an old per-repo brain/ folder into it, or when someone says set up the brain, shared notes, second brain, team knowledge base, project context, "where do decisions live", even if they don't say "brain". Not for personal notes or a personal vault.
 ---
 
-# Central brain
+# Brain
 
-One repo, `a3n-tech/brain` (plugin option `brain_repo`), is the **source of truth for team context**. It is an
+One repo, `<owner>/brain` by default, is the **source of truth for team context**. It is an
 git repo with one folder per project repo: `projects/<repo-name>/`. Agents read it at every session start
 from a local clone the harness keeps current; people read and edit the same repo on GitHub. Git is the sync.
 
@@ -14,8 +14,9 @@ settings). Every step is idempotent: detect, write only what is missing, never o
 
 ## Where is the local clone?
 
-The session-start context names it ("Local clone: …"). Default: the plugin data dir + `/brain`, or the
-`brain_dir` plugin option (point it at your own clone). Below, `$BRAIN` is that path.
+Which brain: the repo's own `CLAUDE.md` declares it with a line `<!-- atlas:brain <owner>/<name> -->` (outside the managed rules block); without that line it is `<owner>/brain` for the repo's owner. The session-start context names the local clone ("Local clone: …"): one clone per brain at
+`<base>/<owner>/<name>`, where `<base>` is the plugin data dir + `/brains` or the `brain_dir` option. Atlas uses a clone
+only if its origin is that brain and GitHub reports the brain private or internal. Below, `$BRAIN` is that path.
 
 ## What lives where (one home per fact)
 
@@ -29,13 +30,13 @@ The session-start context names it ("Local clone: …"). Default: the plugin dat
 ## A. Bootstrap the brain repo (once per org; an owner does this)
 
 ```bash
-gh repo view a3n-tech/brain --json visibility -q .visibility 2>/dev/null || echo missing
+gh repo view <org>/brain --json visibility -q .visibility 2>/dev/null || echo missing
 ```
 
 Missing → confirm with the person first (it creates an org repo), then:
 
 ```bash
-gh repo create a3n-tech/brain --private --clone && cd brain
+gh repo create <org>/brain --private --clone && cd brain
 cp -R "${CLAUDE_SKILL_DIR}/central/." .
 git add -A && git commit -m "chore: start team brain" && git push -u origin main
 ```
@@ -59,13 +60,13 @@ Run inside the project repo. The project name is the GitHub repo name from `orig
    In `projects/<repo>/index.md` set `repo: <owner>/<repo>` exactly (Atlas only treats the project as linked when
    this matches the repo's origin), replace `REPLACE-WITH-REPO-NAME`, write one or two sentences on the project,
    and add the project to the root `index.md` Projects list. Commit `chore: link <repo>`, push, `gh pr create`
-   in `a3n-tech/brain`, then `git -C "$BRAIN" worktree remove /tmp/brain-link-<repo>`.
+   in the brain repo, then `git -C "$BRAIN" worktree remove /tmp/brain-link-<repo>`.
 3. In the project repo: remove any `brain/** merge=paul-ai` line from `.gitattributes`; delete
    `.github/workflows/brain-mirror.yml`, `.github/workflows/brain-sync.yml`, `scripts/brain-mirror.mjs` if present.
 4. Optional, saves mirror lag: if the org created the Dispatch GitHub App (see the brain repo README), add
    `.github/workflows/brain-notify.yml` so a `.paul/` change starts the brain's mirror at once instead of waiting
    for the daily run. Repo variable `BRAIN_DISPATCH_APP_ID`, secret `BRAIN_DISPATCH_PRIVATE_KEY`. That App has only
-   Actions write on `a3n-tech/brain`, so a leaked key can start the mirror and nothing else. No Dispatch App: skip.
+   Actions write on the brain repo, so a leaked key can start the mirror and nothing else. No Dispatch App: skip.
    ```yaml
    name: brain-notify
    on: { push: { branches: [main], paths: [".paul/**"] } }
@@ -79,9 +80,9 @@ Run inside the project repo. The project name is the GitHub repo name from `orig
            with:
              app-id: ${{ vars.BRAIN_DISPATCH_APP_ID }}
              private-key: ${{ secrets.BRAIN_DISPATCH_PRIVATE_KEY }}
-             owner: a3n-tech
+             owner: <org>
              repositories: brain
-         - run: gh api repos/a3n-tech/brain/actions/workflows/brain-mirror.yml/dispatches -f ref=main
+         - run: gh api repos/<org>/brain/actions/workflows/brain-mirror.yml/dispatches -f ref=main
            env: { GH_TOKEN: "${{ steps.app.outputs.token }}" }
    ```
 
@@ -99,9 +100,9 @@ Central only: after this the project repo has no `brain/`.
 2. Commit there (`chore(<repo>): migrate notes`), push the branch and open a PR to main (`gh pr create`); the gate
    merges plain notes. Remove the worktree afterwards.
 3. In the project repo: `git rm -r brain/`, fix references (`grep -rn "brain/" --include=*.md .`), point
-   `docs/agents/domain.md` at the central brain (`projects/<repo>/decisions/`, root `glossary.md`).
+   `docs/agents/domain.md` at the brain (`projects/<repo>/decisions/`, root `glossary.md`).
 4. Report what moved and what was skipped. Do not commit the project repo unless asked; if asked, one commit
-   `chore(brain): move notes to the central brain`.
+   `chore(brain): move notes to the brain`.
 
 ## Rules for every agent
 

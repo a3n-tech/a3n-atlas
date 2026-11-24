@@ -46,6 +46,7 @@ shopt -u nocasematch
 [ "$n" -eq 0 ] && { echo "nothing to merge"; exit 3; }
 
 # Secret scan: full new contents of everything except deletions (includes type changes).
+# Patterns: keep in sync with SECRET_RES in the plugin's scripts/lib.mjs (Node there, so this cannot import it).
 # Write to a file and grep the file. Piping into `grep -q` makes grep exit early, the writer dies of
 # SIGPIPE, and pipefail then reports the scan as clean.
 tmp=$(mktemp -d "${RUNNER_TEMP:-${TMPDIR:-/tmp}}/gate.XXXXXX")
@@ -54,7 +55,7 @@ while IFS= read -r -d '' f; do
   git show "$head:$f" >> "$tmp/contents" 2>/dev/null || true
   printf '\n' >> "$tmp/contents"
 done < <(git diff --name-only -z --no-renames --diff-filter=d "$base" "$head")
-if [ -f "$tmp/contents" ] && grep -aqE '(gh[pousr]_[A-Za-z0-9]{20,}|github_pat_|sk_(live|test)_[A-Za-z0-9]{10,}|sk-[A-Za-z0-9]{20,}|AKIA[0-9A-Z]{16}|-----BEGIN [A-Z ]*PRIVATE KEY|xox[abpors]-)' "$tmp/contents"; then
+if [ -f "$tmp/contents" ] && grep -aqE '(gh[pousr]_[A-Za-z0-9]{20,}|github_pat_|sk_(live|test)_[A-Za-z0-9]{10,}|sk-[A-Za-z0-9_-]{20,}|AKIA[0-9A-Z]{16}|AIza[0-9A-Za-z_-]{35}|-----BEGIN [A-Z ]*PRIVATE KEY|xox[abpors]-)' "$tmp/contents"; then
   bad="${bad}A changed file looks like it contains a secret. Remove it, store secrets in the password manager, and push again."$'\n'
 fi
 

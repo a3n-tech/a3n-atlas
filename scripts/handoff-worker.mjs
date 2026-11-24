@@ -1,6 +1,6 @@
 // Detached from SessionEnd. Turns the session into team-visible context:
 //   ticket branch -> WIP commit (if secret-scan clean) + push + draft PR + AI handoff comment
-//   any branch    -> AI journal note in the central brain: projects/<repo>/journal/ (one file per session)
+//   any branch    -> AI journal note in the brain: projects/<repo>/journal/ (one file per session)
 // Never touches the default branch's history, never commits during a merge/rebase, never commits on a branch
 // other than the one the session ended on, never changes the person's staging (the scan and commit use a private
 // index). The journal is built straight on the brain's main with git plumbing: the brain clone is never touched.
@@ -8,7 +8,7 @@ import { readFileSync, writeFileSync, existsSync, rmSync, copyFileSync, mkdtempS
 import { join, dirname, resolve, basename } from "node:path";
 import { tmpdir } from "node:os";
 import { sh, trySh, issueFromBranch, hasSecret, redact, claude, log, HANDOFF_MARK, isHarnessRepo, SECRET_FILE_RE, repoFromUrl,
-  gitOperationInProgress, parseSections, brainDir, brainProject, brainRepo, linkedHub, acquireLock } from "./lib.mjs";
+  gitOperationInProgress, parseSections, brainClone, brainProject, brainRepo, linkedHub, acquireLock, isPrivateRepo } from "./lib.mjs";
 
 const payloadFile = process.argv[2];
 let input;
@@ -70,13 +70,13 @@ Never include secrets, tokens, passwords, emails or personal data. No mention of
 
 Branch: ${branch} ${issue ? `(ticket #${issue})` : ""}
 Diff stat:\n${diffStat}\n\nTRANSCRIPT:\n${transcript}`);
-  const json = parseSections(raw);
-  if (!json.handoff && !json.journal) return log(`handoff: model output had no sections (${input.session_id})`);
-  const handoff = redact(json.handoff || "");
-  const journal = redact(json.journal || "");
+  const sections = parseSections(raw);
+  if (!sections.handoff && !sections.journal) return log(`handoff: model output had no sections (${input.session_id})`);
+  const handoff = redact(sections.handoff || "");
+  const journal = redact(sections.journal || "");
 
-  // Journal -> central brain, projects/<repo>/journal/: one file per session, so teammates never conflict.
-  if (journal.trim()) writeJournal(root, { journal, title: json.title, author, branch, issue });
+  // Journal -> brain, projects/<repo>/journal/: one file per session, so teammates never conflict.
+  if (journal.trim()) writeJournal(root, { journal, title: sections.title, author, branch, issue, sessionId: input.session_id });
 
   if (!issue) return log(`handoff: journal only (${branch})`);
   const busy = gitOperationInProgress(root);
@@ -86,9 +86,8 @@ Diff stat:\n${diffStat}\n\nTRANSCRIPT:\n${transcript}`);
   // session summary must never land somewhere public.
   // Check the repo we will actually push to (origin), and pin every gh call to it.
   const repo = repoFromUrl(tryGit("remote", "get-url", "origin"));
-  const visibility = repo && trySh("gh", ["repo", "view", repo, "--json", "visibility", "-q", ".visibility"], { cwd: root });
-  if (visibility !== "PRIVATE" && visibility !== "INTERNAL") {
-    return log(`handoff: origin ${repo ?? "unparseable"} visibility ${visibility ?? "unknown"} — kept local, no push/PR/comment`);
+  if (!repo || !isPrivateRepo(repo, { cwd: root })) {
+    return log(`handoff: origin ${repo ?? "unparseable"} is not private or internal — kept local, no push/PR/comment`);
   }
   // The branch number must be a real open issue (not a PR, not closed): `3-way-merge` must not touch #3's thread.
   // `gh issue view` also answers for PR numbers, so check the URL too.
@@ -138,7 +137,7 @@ Diff stat:\n${diffStat}\n\nTRANSCRIPT:\n${transcript}`);
     } finally { rmSync(tmpIndex, { force: true }); }
   }
 
-  // Push the ticket branch and make sure a draft PR exists.
+  // The next session (anyone's) finds the work through the pushed branch and its draft PR.
   // Push the named branch, never whatever HEAD is now.
   if (tryGit("push", "-u", "origin", `refs/heads/${branch}:refs/heads/${branch}`) === null) notes.push("⚠️ Push failed — branch may be behind; next session should pull/rebase.");
   // Only an OPEN PR counts: `gh pr view <branch>` would also return an old merged one.
@@ -155,24 +154,24 @@ Diff stat:\n${diffStat}\n\nTRANSCRIPT:\n${transcript}`);
   log(`handoff posted #${issue} (${branch})`);
 }
 
-function writeJournal(root, { journal, title, author, branch, issue }) {
+function writeJournal(root, { journal, title, author, branch, issue, sessionId }) {
   const project = brainProject(root);
   const repo = brainRepo(root);
-  const bdir = brainDir();
-  if (!project || !repo || !existsSync(join(bdir, ".git"))) return log(`journal skip: ${project ?? "repo"} has no brain clone yet`);
+  // Only a clone whose origin really is this brain and that brain-pull confirmed private: pushing to "origin" below
+  // can then only reach this brain.
+  const bdir = brainClone(repo);
+  if (!project || !bdir) return log(`journal skip: ${project ?? "repo"} has no verified brain clone (${repo ?? "no brain"})`);
   const b = (...a) => trySh("git", a, { cwd: bdir, timeout: 60_000 });
   if (b("fetch", "-q", "origin", "main") === null) return log("journal skip: could not fetch the brain");
-  // Linked = projects/<p>/index.md exists as a file on the brain's reviewed main (it only arrives through a PR).
   // Linked = the reviewed hub on the brain's main names exactly this repo (owner/name).
   if (!linkedHub(root, bdir)) return log(`journal skip: ${project} is not linked in the brain`);
-  // Never send a private project's notes to a public brain.
-  const vis = trySh("gh", ["repo", "view", repo, "--json", "visibility", "-q", ".visibility"]);
-  if (vis !== "PRIVATE" && vis !== "INTERNAL") return log(`journal skip: brain repo visibility ${vis ?? "unknown"}`);
+  // Never send a private project's notes to a public brain (checked again now; the stamp may be old).
+  if (!isPrivateRepo(repo)) return log(`journal skip: brain ${repo} is not private or internal`);
   const login = trySh("gh", ["api", "user", "-q", ".login"]);
   if (!login || !/^[A-Za-z0-9-]{1,39}$/.test(login)) return log("journal skip: no gh login");
 
   const slug = String(title || "session").replace(/[^a-z0-9-]/gi, "").slice(0, 40) || "session";
-  const sid = String(input.session_id || Date.now()).replace(/[^\w-]/g, "").slice(0, 8) || "session";
+  const sid = String(sessionId || Date.now()).replace(/[^\w-]/g, "").slice(0, 8) || "session";
   const path = `projects/${project}/journal/${new Date().toISOString().slice(0, 10)}-${slug}-${sid}.md`;
   const yaml = (v) => JSON.stringify(String(v)); // quoted scalar: names/branches can't break the frontmatter
   const text = `---\ntype: journal\nproject: ${yaml(project)}\nauthor: ${yaml(author)}\nbranch: ${yaml(branch)}\n` +

@@ -3,7 +3,7 @@
 
 This repo runs [Atlas](https://github.com/a3n-tech/a3n-atlas), the a3n-tech agentic team toolkit: PAUL plans milestones
 and phases in `.paul/`, the engineering skills build one ticket per branch, hooks pass context between people and
-sessions, and the central brain holds team context.
+sessions, and the brain holds team context.
 
 - Rules and workflow: `CLAUDE.md` (between the `harness:team-rules` markers).
 - Ticket, label and domain docs: `docs/agents/`.

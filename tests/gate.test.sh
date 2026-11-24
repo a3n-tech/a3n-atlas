@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Gate tests for the central brain auto-merge. Run: bash -eo pipefail tests/gate.test.sh
+# Gate tests for the brain auto-merge. Run: bash -eo pipefail tests/gate.test.sh
 G="$(cd "$(dirname "$0")/.." && pwd)/skills/brain/central/scripts/gate.sh"
 R=$(mktemp -d); cd $R; git init -q; git config user.email t@t; git config user.name t
 mkdir -p notes projects/x/plan; echo hi > README.md; git add -A; git commit -qm base; BASE=$(git rev-parse HEAD)
