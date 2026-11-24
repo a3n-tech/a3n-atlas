@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.9.1
+
+- Drift checker expands issue ranges of up to 1,000 issues (was 100). The pilot repo's plan has a real 118-issue range; the cap only exists to stop a typo from hanging the check.
+
 ## 0.9.0
 
 - Team visibility: a repo can declare its GitHub Project in `CLAUDE.md` (`<!-- atlas:project <owner>/<number> -->`, read from the default branch). Session start puts the ticket on the board as In progress; session end sets Blocked when the handoff lists blockers. Uses the person's own `gh` token (`gh auth refresh -s project` once), no Actions minutes.

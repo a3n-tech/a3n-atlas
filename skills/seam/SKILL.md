@@ -177,7 +177,7 @@ Do not commit unless asked; if asked, one commit, message
   `push` to `main` with the same paths, and a daily `schedule`. Never `issues:`: each label change
   spent a minute, and one repo burned 330 minutes in 3 weeks.
   The checker fails closed on `gh` errors (exit 2). It expands ranges only when written `#5 – #18`
-  (en dash, at most 100 issues), so update plans that write `#5-#18`.
+  (en dash, at most 1,000 issues), so update plans that write `#5-#18`.
 
 ## Don'ts
 

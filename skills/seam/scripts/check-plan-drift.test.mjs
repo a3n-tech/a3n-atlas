@@ -12,6 +12,7 @@ const script = resolve(import.meta.dirname, "check-plan-drift.mjs");
 const nums = (text) => { const p = []; const r = referencedIssues([["a.md", text]], p); return [[...r.keys()].sort((x, y) => x - y), p]; };
 assert.deepEqual(nums("see #5 – #8")[0], [5, 6, 7, 8]);
 assert.deepEqual(nums("see #5–#7")[0], [5, 6, 7]); // en dash without spaces is a range too
+assert.equal(nums("#104 – #221")[0].length, 118); // a real plan range of 118 issues expands
 let [k, p] = nums("#1 – #999999999");
 assert.deepEqual(k, [1, 999999999]);
 assert.equal(p.length, 1);
