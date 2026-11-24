@@ -188,8 +188,29 @@ Check each and list only what is still missing, in this order:
 If `.paul/PROJECT.md` is missing, start `/paul:init` now. Stop before the user-only step and
 tell the person exactly what to type.
 
-## 6. Report
+## 6. Report: one checklist
 
-A few lines: what was installed, what was written or skipped, what the person must do next
-(one action). Do not commit unless asked. If asked, one commit:
-`chore: adopt Atlas`. No AI attribution in the message.
+End with exactly one checklist, a ✓ or ✗ per line, and for the first ✗ the exact command to run next:
+
+```
+✓/✗ gh logged in and git credentials set         (gh auth login && gh auth setup-git)
+✓/✗ Atlas installed, old harness plugin removed    (claude plugin install a3ntech@a3n-tech)
+✓/✗ PAUL installed (restart Claude Code after)     (npx -y paul-framework@1.4.0 --global)
+✓/✗ repo pins in .claude/settings.json
+✓/✗ team rules in CLAUDE.md, README pointer, docs/HARNESS-SETUP.md
+✓/✗ .gitattributes merge driver line
+✓/✗ CI budget reviewed
+✓/✗ linked in the brain                            (/a3ntech:brain)
+✓/✗ .paul/PROJECT.md                               (/paul:init)
+✓/✗ docs/agents/issue-tracker.md                   (you type: /mattpocock-skills:setup-matt-pocock-skills)
+✓/✗ Execution Seam and check:plan                  (/a3ntech:seam)
+✓/✗ your role set                                  (/a3ntech:role)
+```
+
+When every line is ✓, record it (local only; it lets the team measure onboarding time):
+
+```bash
+node "${CLAUDE_SKILL_DIR}/../../scripts/setup-done.mjs"
+```
+
+Do not commit unless asked. If asked, one commit: `chore: adopt Atlas`. No AI attribution in the message.

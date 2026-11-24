@@ -18,14 +18,15 @@ Roles: `pmo` (PMO / Delivery), `pm` (Project / Product Manager), `architect`, `f
    "release manager" → `release`). Unknown title → ask; don't invent a role.
 3. Write them, one per line:
    ```bash
-   mkdir -p ~/.config/a3n-harness && printf '%s\n' <role> [<role> …] > ~/.config/a3n-harness/roles
+   [ -d ~/.config/a3n-harness ] && [ ! -e ~/.config/atlas ] && mv ~/.config/a3n-harness ~/.config/atlas  # old folder name
+   mkdir -p ~/.config/atlas && printf '%s\n' <role> [<role> …] > ~/.config/atlas/roles
    ```
 4. Read the lens file(s) aloud in two or three lines: angle of attack, what they pick up, first skills.
    The lens loads automatically from the next session on.
 
 ## Show
 
-`cat ~/.config/a3n-harness/roles` and summarise each lens. No file → offer to set it.
+`cat ~/.config/atlas/roles` (or the older `~/.config/a3n-harness/roles`) and summarise each lens. No file → offer to set it.
 
 ## Tickets by role
 
@@ -41,7 +42,7 @@ done
 ## Personal lens (private)
 
 A role that isn't one of the nine (e.g. a leadership role) can be a **personal lens**: write it to
-`~/.config/a3n-harness/lenses/<name>.md` (`<name>` = lowercase letters, digits, `-`) and add `<name>` to the
+`~/.config/atlas/lenses/<name>.md` (`<name>` = lowercase letters, digits, `-`) and add `<name>` to the
 roles file. It loads only on that machine and is never committed or shown to anyone else. Use the
 team lens format (angle of attack, pick up, reach for first, always).
 

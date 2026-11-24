@@ -58,6 +58,16 @@ done < <(git diff --name-only -z --no-renames --diff-filter=d "$base" "$head")
 if [ -f "$tmp/contents" ] && grep -aqE '(gh[pousr]_[A-Za-z0-9]{20,}|github_pat_|sk_(live|test)_[A-Za-z0-9]{10,}|sk-[A-Za-z0-9_-]{20,}|AKIA[0-9A-Z]{16}|AIza[0-9A-Za-z_-]{35}|-----BEGIN [A-Z ]*PRIVATE KEY|xox[abpors]-)' "$tmp/contents"; then
   bad="${bad}A changed file looks like it contains a secret. Remove it, store secrets in the password manager, and push again."$'\n'
 fi
+# gitleaks with the repo's .gitleaks.toml when it is installed (CI installs it); the regex above always runs too.
+cfg="$(cd "$(dirname "$0")/.." && pwd)/.gitleaks.toml"
+if [ -f "$tmp/contents" ] && command -v gitleaks >/dev/null 2>&1; then
+  grc=0; gitleaks dir "$tmp" -c "$cfg" --no-banner --redact --exit-code 5 >/dev/null 2>&1 || grc=$?
+  if [ "$grc" = 5 ]; then
+    bad="${bad}gitleaks found a secret in a changed file. Remove it and push again."$'\n'
+  elif [ "$grc" != 0 ]; then
+    bad="${bad}gitleaks could not run (exit $grc); a reviewed PR is needed."$'\n'
+  fi
+fi
 
 if [ -n "$bad" ]; then
   printf '%s' "$bad"

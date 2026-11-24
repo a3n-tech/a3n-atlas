@@ -6,9 +6,11 @@
 // index). The journal is built straight on the brain's main with git plumbing: the brain clone is never touched.
 import { readFileSync, writeFileSync, existsSync, rmSync, copyFileSync, mkdtempSync } from "node:fs";
 import { join, dirname, resolve, basename } from "node:path";
+import { fileURLToPath } from "node:url";
+import { spawnSync } from "node:child_process";
 import { tmpdir } from "node:os";
 import { sh, trySh, issueFromBranch, hasSecret, redact, claude, log, HANDOFF_MARK, isHarnessRepo, SECRET_FILE_RE, repoFromUrl,
-  gitOperationInProgress, parseSections, brainClone, brainProject, brainRepo, linkedHub, acquireLock, isPrivateRepo } from "./lib.mjs";
+  gitOperationInProgress, gitleaksFinds, parseSections, projectRef, hasBlockers, brainClone, brainProject, brainRepo, linkedHub, acquireLock, isPrivateRepo } from "./lib.mjs";
 
 const payloadFile = process.argv[2];
 let input;
@@ -120,7 +122,7 @@ Diff stat:\n${diffStat}\n\nTRANSCRIPT:\n${transcript}`);
       const files = (numstat || "").split("\0").filter(Boolean).map((r) => r.split("\t"));
       const reason =
         diff === null || numstat === null ? "the diff could not be read"
-        : hasSecret(diff) ? "the diff matched a secret pattern"
+        : hasSecret(diff) || gitleaksFinds(diff) === true ? "the diff matched a secret pattern"
         : files.some(([a]) => a === "-") ? "it includes binary files the secret scan cannot read"
         : files.some(([, , f]) => SECRET_FILE_RE.test(f)) ? "it includes a credential-shaped file (.env, key, pem…)"
         : null;
@@ -154,6 +156,9 @@ Diff stat:\n${diffStat}\n\nTRANSCRIPT:\n${transcript}`);
   const body = `${HANDOFF_MARK}\n## Session handoff — ${author}\nBranch \`${branch}\`${prUrl ? ` · PR ${prUrl}` : ""}\n\n${handoff}\n${notes.length ? "\n" + notes.join("\n") : ""}`;
   sh("gh", ["issue", "comment", String(issue), "-R", repo, "--body", body], { cwd: root });
   log(`handoff posted #${issue} (${branch})`);
+  // Team visibility: Blocked when the handoff lists blockers, otherwise still In progress.
+  if (projectRef(root)) spawnSync(process.execPath, [join(dirname(fileURLToPath(import.meta.url)), "project-status.mjs"), root,
+    String(issue), hasBlockers(handoff) ? "Blocked" : "In progress"], { stdio: "ignore", timeout: 90_000 });
 }
 
 function writeJournal(root, { journal, title, author, branch, issue, sessionId }) {

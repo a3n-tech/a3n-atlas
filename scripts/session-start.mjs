@@ -5,7 +5,7 @@ import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import { spawn } from "node:child_process";
 import { trySh, trySpawn, issueFromBranch, readStdinJson, HANDOFF_MARK, log, isHarnessRepo, readRoles, rolesFile, ROLES,
-  personalLens, brainClone, brainProject, brainRepo, linkedHub } from "./lib.mjs";
+  personalLens, brainClone, brainProject, brainRepo, linkedHub, recordOnboarding, originRepo, projectRef } from "./lib.mjs";
 
 if (process.env.HARNESS_CHILD) process.exit(0);
 const input = await readStdinJson();
@@ -14,6 +14,7 @@ const root = trySh("git", ["rev-parse", "--show-toplevel"], { cwd });
 if (!root || !isHarnessRepo(root)) process.exit(0);
 const git = (...a) => trySh("git", a, { cwd: root });
 const out = [];
+recordOnboarding("first-seen", originRepo(root));
 
 // 1. AI merge driver, per clone (git config is not committed, so every clone needs this).
 const driver = `node "${join(dirname(fileURLToPath(import.meta.url)), "paul-merge.mjs")}" %O %A %B %P`;
@@ -40,6 +41,9 @@ const [issueRaw, ...queueRaw] = await Promise.all([
   ...roles.filter((x) => ROLES.includes(x)).map((r) => trySpawn("gh", ["issue", "list", "--state", "open", "--label",
     "ready-for-agent", "--label", `role:${r}`, "--json", "number,assignees", "--limit", "5"], GH).then((raw) => [r, raw])),
 ]);
+// Team visibility: put the ticket on the team's GitHub Project as In progress (background, the person's own token).
+if (issue && projectRef(root)) spawn(process.execPath, [join(dirname(fileURLToPath(import.meta.url)), "project-status.mjs"), root,
+  String(issue), "In progress"], { detached: true, stdio: "ignore", env: process.env }).unref();
 if (issue && issueRaw) {
   let data = null; try { data = JSON.parse(issueRaw); } catch {}
   // `gh issue view` also answers for PR numbers: a branch like `3-way-merge` must not load PR #3's thread.

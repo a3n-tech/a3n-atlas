@@ -1,6 +1,6 @@
 # Glossary
 
-**Atlas**: the a3n-tech toolkit for an agentic scrum team. People and agents share one brain, one set of plugins and one process.
+**Atlas**: a toolkit for an agentic scrum team (built by a3n-tech, MIT). People and agents share one brain, one set of plugins and one process.
 
 **Core**: what every Atlas install gets with no servers to run: the plugin, the git brain, the process and the session hooks.
 

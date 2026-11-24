@@ -1,7 +1,7 @@
 <!-- managed by /harness:setup (Atlas, /a3ntech:setup); edit in a3n-tech/a3n-atlas, not here -->
 # Atlas setup and troubleshooting
 
-This repo runs **Atlas**, the a3n-tech agentic team toolkit: one shared way of planning, building and handing off
+This repo runs **Atlas**, an agentic team toolkit: one shared way of planning, building and handing off
 work with Claude Code. Source and changelog: [a3n-tech/a3n-atlas](https://github.com/a3n-tech/a3n-atlas).
 
 - **PAUL** owns the plan: milestones and phases in `.paul/`.
@@ -37,7 +37,7 @@ Per-person options (`/config` or `claude plugin configure a3ntech@a3n-tech`): `h
 Run `/a3ntech:role` and say what you do (e.g. "frontend", "backend and devops", "QA"). Roles: PMO, PM,
 architect, frontend, backend, full-stack, DevOps, release engineer, QA/STE. Your sessions then focus on
 your role's work and reach for its skills first; your tickets are labelled `role:<you>`. It's stored on your
-machine only (`~/.config/a3n-harness/roles`).
+machine only (`~/.config/atlas/roles`).
 
 ## 2. Daily workflow
 
@@ -80,6 +80,12 @@ into an issue — store it with `wrangler secret` or the password manager and cl
 - The issue must exist and be open. Nothing runs during a merge, rebase or cherry-pick, WIP commits carry
   `[skip ci]`, and your staging is never changed.
 - Opt out of the session-end automation: turn off the `handoff` option (legacy `HARNESS_HANDOFF=off` still works).
+
+## 3b. Team board
+
+If this repo's `CLAUDE.md` has `<!-- atlas:project <owner>/<number> -->`, your tickets show on that GitHub Project:
+In progress when you start a session on the ticket branch, Blocked when your handoff lists blockers. Run
+`gh auth refresh -s project` once so your `gh` token may update it.
 
 ## 4. Brain
 
