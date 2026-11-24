@@ -1,6 +1,6 @@
 ---
 name: role
-description: Set or show the person's SDLC role(s) for the a3n-tech harness — PMO, PM, architect, frontend, backend, full-stack, DevOps, release engineer, QA/STE — which sets their angle of attack, the tickets they pick up and the skills they reach for first. Use this when someone says "I'm the frontend dev", "set my role", "what's my role", "I'm doing QA now", "switch me to release", joins the team, or when the session-start note says no role is set.
+description: Set or show a person's SDLC role (PMO, PM, architect, frontend, backend, full-stack, DevOps, release, QA/STE), which sets their focus, ticket queue and first skills. Use when someone states, changes or asks about their role, or joins the team.
 ---
 
 # Harness role

@@ -1,6 +1,6 @@
 ---
 name: brain
-description: Set up or use the team's brain — one git repo (default <owner>/brain) that holds shared context for every project, one folder per repo (projects/<repo>/) with decisions, glossary, design, research, meetings, people, session journal and generated plan/ticket mirrors. Use this to bootstrap the brain repo for the org, link a project repo to it, migrate an old per-repo brain/ folder into it, or when someone says set up the brain, shared notes, second brain, team knowledge base, project context, "where do decisions live", even if they don't say "brain". Not for personal notes or a personal vault.
+description: Set up, link or use the team brain: the shared notes repo (decisions, glossary, design, research, session journals), one folder per project. Use for shared notes, a team knowledge base, project context, where decisions live, or migrating an old brain/ folder. Not for personal notes.
 ---
 
 # Brain

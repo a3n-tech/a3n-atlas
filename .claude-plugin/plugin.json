@@ -1,7 +1,7 @@
 {
   "name": "a3ntech",
   "displayName": "Atlas",
-  "version": "0.8.0",
+  "version": "0.8.1",
   "description": "Atlas, the a3n-tech agentic team toolkit: PAUL owns milestones and phases, the mattpocock skills own tickets, a brain repo holds team context, and session hooks hand work between people. /a3ntech:setup bootstraps a repo.",
   "author": {
     "name": "a3n-tech",
@@ -20,9 +20,6 @@
   "engines": {
     "claude-code": ">=2.1.324"
   },
-  "dependencies": [
-    "mattpocock-skills@claude-plugins-official"
-  ],
   "userConfig": {
     "handoff": {
       "type": "boolean",

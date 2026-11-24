@@ -1,6 +1,6 @@
 ---
 name: setup
-description: Onboard a repo or a teammate onto Atlas, the a3n-tech agentic team toolkit. Installs PAUL, pins the repo-level plugins (ponytail, caveman) in .claude/settings.json, writes the team rules into CLAUDE.md, wires the AI merge driver, links the repo to the brain, reviews CI cost, then walks through /paul:init and /a3ntech:seam. Use this whenever someone says set up / initialize / install Atlas (or the harness), onboard this repo, get me set up on this project, start a new team repo, or when a repo has no .paul/ or no team rules block in CLAUDE.md, even if they never say "Atlas". Not for planning a phase (/paul:plan) or toggling a single plugin.
+description: Onboard a repo or a teammate onto Atlas: installs PAUL, pins team plugins, writes the team rules, links the brain, reviews CI cost. Use to set up or initialize Atlas (or the harness), onboard a repo, get someone set up, or bring a new repo onto the team workflow. Not for planning a phase.
 ---
 
 # Atlas setup
@@ -49,7 +49,7 @@ Merge `${CLAUDE_SKILL_DIR}/project-settings.json` into `.claude/settings.json`:
 
 This pins the repo-level tools: the token savers `ponytail` (smallest working change) and
 `caveman` (terse output). `enabledPlugins` does not install anything.
-Each person installs Atlas once (below); `mattpocock-skills` comes with it as a dependency.
+Each person installs Atlas once (below). `mattpocock-skills` is pinned per repo by setup (not a plugin dependency: a dependency that cannot be installed would stop Atlas loading at all).
 If they still have the old `harness` plugin, uninstall it first (`claude plugin uninstall harness@a3n-tech`), or both
 sets of hooks run.
 

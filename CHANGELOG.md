@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.8.1
+
+- Token budget: the team rules block injected into every session is 2,957 characters instead of 6,582 (how the automation works moved to `docs/HARNESS-SETUP.md`); skill descriptions total 1,358 characters instead of 2,770, and the trigger evals still pass 16 of 16 on Sonnet.
+- Session end: no model call when there is nowhere to write (not a ticket branch with an open issue in a private repo, and no linked brain); the transcript sent to the model is capped at 20,000 characters instead of 60,000.
+- `mattpocock-skills` is a repo pin again, not a plugin dependency: a dependency that cannot be installed stopped Atlas loading at all, which also kept the trigger evals from ever firing.
+
 ## 0.8.0
 
 - Which brain a repo uses is committed config, never a personal setting: `<!-- atlas:brain owner/name -->` in `CLAUDE.md` on the repo's default branch (outside the managed block; read from `origin`, never the working tree), else `<owner>/brain`. The `brain_repo` option is gone.
@@ -22,5 +28,5 @@
 - Drift checker fails closed on `gh` errors (exit 2), caps expanded ranges at 100, and honors the issue list limit.
 - Separate concurrency groups for bot workflows.
 - Dropped Obsidian and the notes fan-out: people edit the brain on GitHub, agents through the local clone.
-- Plugin `dependencies` (`mattpocock-skills`) and `userConfig` (`handoff`, `brain_dir`).
+- Plugin `userConfig` (`handoff`, `brain_dir`).
 - New setup step "CI budget": reviews workflows to cut Actions minutes.

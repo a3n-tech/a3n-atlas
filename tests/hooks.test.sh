@@ -12,6 +12,7 @@ mkdir -p "$T/bin" "$T/data"
 cat > "$T/bin/claude" <<'EOF'
 #!/bin/sh
 cat >/dev/null
+echo call >> "${CLAUDELOG:-/dev/null}"
 [ -n "${CLAUDE_SIDE:-}" ] && sh -c "$CLAUDE_SIDE"
 printf '=== HANDOFF ===\n### Done\n- x\n=== JOURNAL ===\n- decided y\n=== TITLE ===\nt\n'
 EOF
@@ -32,7 +33,7 @@ esac
 EOF
 chmod +x "$T/bin/"*
 for i in 1 2 3 4; do echo '{"type":"user","message":{"content":"hi"}}' >> "$T/tr.jsonl"; done
-export PATH="$T/bin:$PATH" GHLOG="$T/gh.log" CLAUDE_PLUGIN_DATA="$T/data" HARNESS_BRAIN_DIR="$T/brains"
+export PATH="$T/bin:$PATH" GHLOG="$T/gh.log" CLAUDELOG="$T/claude.log" CLAUDE_PLUGIN_DATA="$T/data" HARNESS_BRAIN_DIR="$T/brains"
 
 # Project repo with a bare push remote; origin url looks like github so repoFromUrl works.
 git init -q --bare -b main "$T/app.git"
@@ -106,6 +107,12 @@ git remote set-url origin https://github.com/someone-else/app.git
 run s6b
 ok "other owner, same name: no journal" '! git --git-dir="$T/brain.git" for-each-ref refs/heads/notes/alice | grep -q s6b'
 git remote set-url origin https://github.com/acme/app.git
+
+# 6c. Not a ticket branch and not linked: nowhere to write, so the model is never called.
+git remote set-url origin https://github.com/acme/other.git; git switch -q -c scratch
+: > "$T/claude.log"; run s6c
+ok "nowhere to write: no model call" '[ ! -s "$T/claude.log" ]'
+git switch -q 12-feat; git remote set-url origin https://github.com/acme/app.git
 
 # 7. Session start reads hubs from origin/main, not the working tree.
 echo "# EVIL unreviewed hub" > "$BC/projects/app/index.md"

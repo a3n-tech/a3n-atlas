@@ -41,7 +41,8 @@ function transcriptText(path) {
     const text = typeof c === "string" ? c : Array.isArray(c) ? c.filter((b) => b.type === "text").map((b) => b.text).join("\n") : "";
     if (text.trim()) parts.push(`${e.type.toUpperCase()}: ${text.trim()}`);
   }
-  return parts.length < 4 ? "" : parts.join("\n\n").slice(-60_000);
+  // The most recent ~20k characters carry the state worth handing off; older turns cost tokens and add little.
+  return parts.length < 4 ? "" : parts.join("\n\n").slice(-20_000);
 }
 
 async function main() {
@@ -55,9 +56,25 @@ async function main() {
   const branch = tryGit("branch", "--show-current") || "";
   const defBranch = (tryGit("symbolic-ref", "--short", "refs/remotes/origin/HEAD") || "origin/main").replace(/^origin\//, "");
   const issue = branch === defBranch ? null : issueFromBranch(branch);
-  const diffStat = tryGit("diff", "--stat", "HEAD") || "";
   const author = tryGit("config", "user.name") || "unknown";
 
+  // Decide where output can go BEFORE paying for a model call. Ticket handoff: an open issue (not a PR) in a
+  // private/internal origin, and no merge or rebase in progress. Journal: a verified, private brain clone in which
+  // this repo is linked. Neither -> no model call at all.
+  const repo = repoFromUrl(tryGit("remote", "get-url", "origin"));
+  let handoffSkip = !issue ? `not a ticket branch (${branch || "detached"})` : gitOperationInProgress(root) ? "a merge or rebase is in progress" : null;
+  if (!handoffSkip && (!repo || !isPrivateRepo(repo, { cwd: root }))) handoffSkip = `origin ${repo ?? "unparseable"} is not private or internal`;
+  if (!handoffSkip) {
+    // `gh issue view` also answers for PR numbers, so check the URL too: `3-way-merge` must not touch PR #3.
+    const issueState = trySh("gh", ["issue", "view", String(issue), "-R", repo, "--json", "state,url", "-q", '.state + " " + .url'], { cwd: root });
+    const [state, url] = (issueState || "").split(" ");
+    if (state !== "OPEN" || !/\/issues\/\d+$/.test(url || "")) handoffSkip = `#${issue} is not an open issue (${issueState ?? "missing"})`;
+  }
+  const brainBound = brainClone(brainRepo(root));
+  const journalOk = Boolean(brainBound && linkedHub(root, brainBound));
+  if (handoffSkip && !journalOk) return log(`handoff: nothing to write (${handoffSkip}; no linked brain) — model not called`);
+
+  const diffStat = tryGit("diff", "--stat", "HEAD") || "";
   const raw = claude(`You write session handoffs for a software team. Read the session transcript and git diff stat.
 Return exactly these three sections and nothing else, each header on its own line:
 === HANDOFF ===
@@ -76,24 +93,9 @@ Diff stat:\n${diffStat}\n\nTRANSCRIPT:\n${transcript}`);
   const journal = redact(sections.journal || "");
 
   // Journal -> brain, projects/<repo>/journal/: one file per session, so teammates never conflict.
-  if (journal.trim()) writeJournal(root, { journal, title: sections.title, author, branch, issue, sessionId: input.session_id });
+  if (journalOk && journal.trim()) writeJournal(root, { journal, title: sections.title, author, branch, issue, sessionId: input.session_id });
+  if (handoffSkip) return log(`handoff: journal only (${handoffSkip})`);
 
-  if (!issue) return log(`handoff: journal only (${branch})`);
-  const busy = gitOperationInProgress(root);
-  if (busy) return log(`handoff: ${busy} in progress on ${branch} — no WIP commit, push or comment`);
-
-  // Outward actions (push, PR, comment) only for private/internal repos: a WIP diff or a
-  // session summary must never land somewhere public.
-  // Check the repo we will actually push to (origin), and pin every gh call to it.
-  const repo = repoFromUrl(tryGit("remote", "get-url", "origin"));
-  if (!repo || !isPrivateRepo(repo, { cwd: root })) {
-    return log(`handoff: origin ${repo ?? "unparseable"} is not private or internal — kept local, no push/PR/comment`);
-  }
-  // The branch number must be a real open issue (not a PR, not closed): `3-way-merge` must not touch #3's thread.
-  // `gh issue view` also answers for PR numbers, so check the URL too.
-  const issueState = trySh("gh", ["issue", "view", String(issue), "-R", repo, "--json", "state,url", "-q", '.state + " " + .url'], { cwd: root });
-  const [state, url] = (issueState || "").split(" ");
-  if (state !== "OPEN" || !/\/issues\/\d+$/.test(url || "")) return log(`handoff: #${issue} is not an open issue (${issueState ?? "missing"}) — skipped`);
   // The session may have ended a while ago (the model call above takes time): only act if HEAD is still this branch.
   const sameBranch = () => tryGit("branch", "--show-current") === branch;
   if (!sameBranch()) return log(`handoff: HEAD moved off ${branch} before the WIP commit — skipped`);

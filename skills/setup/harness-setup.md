@@ -18,7 +18,7 @@ work with Claude Code. Source and changelog: [a3n-tech/a3n-atlas](https://github
    node --version                     # Node 18+
    git --version                      # 2.31+ (macOS: brew install git)
    ```
-3. Install Atlas (needs Claude Code 2.1.324+). `mattpocock-skills` installs with it. If you had the old `harness` plugin? Remove it first, or both sets of hooks run: `claude plugin uninstall harness@a3n-tech`.:
+3. Install Atlas (needs Claude Code 2.1.324+). The repo pins `mattpocock-skills`; accept it when Claude Code offers it. If you had the old `harness` plugin? Remove it first, or both sets of hooks run: `claude plugin uninstall harness@a3n-tech`.:
    ```bash
    claude plugin marketplace add a3n-tech/a3n-atlas
    claude plugin install a3ntech@a3n-tech
