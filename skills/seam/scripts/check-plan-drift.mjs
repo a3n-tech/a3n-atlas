@@ -44,7 +44,7 @@ function paulDocs() {
   return out;
 }
 
-const MAX_RANGE = 100;
+const MAX_RANGE = 1000; // real plans span a few hundred issues; this only stops a typo like #1–#999999999 from hanging
 const MAX_OPEN = 500;
 
 /** Issue numbers referenced anywhere in the plan, including `#5 – #18` or `#5–#18` ranges (en dash, as documented in the seam skill). */
