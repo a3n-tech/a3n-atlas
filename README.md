@@ -20,7 +20,7 @@ claude plugin marketplace add a3n-tech/a3n-atlas
 claude plugin install a3ntech@a3n-tech
 ```
 
-Or use `/plugin ...` inside Claude Code. `mattpocock-skills` installs automatically as a dependency.
+Or use `/plugin ...` inside Claude Code. `mattpocock-skills` is pinned per repo by setup (not a plugin dependency: a dependency that cannot be installed would stop Atlas loading at all).
 Had the old `harness` plugin? Remove it first, or both sets of hooks run: `claude plugin uninstall harness@a3n-tech`. `ponytail` and `caveman` stay as repo-level pins in `.claude/settings.json`,
 written by setup. Opening a repo does not install anything: `enabledPlugins` only enables what is already installed.
 

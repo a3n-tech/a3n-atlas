@@ -1,6 +1,6 @@
 ---
 name: seam
-description: Wire PAUL (milestones/phases) to the mattpocock engineering skills (GitHub tickets, TDD, review) so the two planning systems never disagree — writes the Execution Seam into .paul/SPECIAL-FLOWS.md, the agent summary into docs/agents/domain.md, installs the check:plan drift checker, creates triage labels, and verifies. Use this after /a3ntech:setup or /paul:init, or whenever someone says set up paul + matt, wire the planning stack, connect phases to tickets, add check:plan, or when check:plan reports orphan/premature drift. Not for creating tickets (/to-tickets) or planning a phase (/paul:plan).
+description: Wire PAUL phases to the mattpocock ticket skills: writes the Execution Seam, installs the check:plan drift checker and triage labels. Use after setup or /paul:init, or to wire the planning stack, connect phases to tickets or add check:plan. Not for making tickets or planning a phase.
 ---
 
 # PAUL + mattpocock seam
@@ -129,7 +129,8 @@ in the check command.
 
 In `AGENTS.md` (or `CLAUDE.md` if there is no `AGENTS.md`), at the end of the
 `## Agent skills` section the mattpocock setup wrote (or at the end of the file if there is
-none), add this block if no `### Planning stack` heading exists:
+none), add this block if no `### Planning stack` heading exists and the file has no Atlas rules block (between the
+`harness:team-rules` markers, which already carries the planning rules):
 
 ```markdown
 ### Planning stack

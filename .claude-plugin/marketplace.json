@@ -13,8 +13,5 @@
       "source": "./",
       "category": "productivity"
     }
-  ],
-  "allowCrossMarketplaceDependenciesOn": [
-    "claude-plugins-official"
   ]
 }
