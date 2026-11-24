@@ -1,6 +1,6 @@
 // SessionStart: register the AI merge driver for this clone, surface unresolved
 // conflicts for AI resolution, and inject the latest handoff for the ticket branch.
-import { existsSync, readdirSync, readFileSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync, lstatSync } from "node:fs";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import { spawn } from "node:child_process";
@@ -63,7 +63,7 @@ spawn(process.execPath, [join(dirname(fileURLToPath(import.meta.url)), "brain-pu
   { detached: true, stdio: "ignore", env: process.env }).unref();
 const bdir = brainDir();
 const project = brainProject(root);
-const hub = (f, n) => existsSync(f) ? readFileSync(f, "utf8").slice(0, n).replace(/</g, "&lt;") : null;
+const hub = (f, n) => existsSync(f) && lstatSync(f).isFile() ? readFileSync(f, "utf8").slice(0, n).replace(/</g, "&lt;") : null;
 const teamHub = hub(join(bdir, "index.md"), 2000);
 const projHub = project && hub(join(bdir, "projects", project, "index.md"), 3000);
 if (!teamHub) {

@@ -16,7 +16,7 @@ fi
 bad=""; n=0
 # Case-insensitive: macOS filesystems fold case, so Projects/X/INDEX.MD is projects/x/index.md.
 shopt -s nocasematch
-protected='^(index\.md|projects/[^/]+/index\.md|projects/[^/]+/plan/.*|projects/[^/]+/tickets/.*|project-template/.*|scripts/.*|\.github/.*)$'
+protected='^(index\.md(/.*)?|projects/[^/]+/index\.md(/.*)?|projects/[^/]+/plan/.*|projects/[^/]+/tickets/.*|project-template/.*|scripts/.*|\.github/.*)$'
 agentfile='(^|/)(claude|agents|gemini|skill|copilot-instructions)\.md$'
 # --raw -z: ":oldmode newmode oldsha newsha status\0path\0". No rename detection: a rename is delete+add.
 while IFS= read -r -d '' meta && IFS= read -r -d '' f; do

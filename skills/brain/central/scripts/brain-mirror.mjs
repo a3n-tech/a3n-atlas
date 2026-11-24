@@ -6,7 +6,7 @@
 // One failing project warns and the rest continue. Writes only on change.
 
 import { execFileSync } from "node:child_process";
-import { readFileSync, writeFileSync, existsSync, mkdirSync, readdirSync, statSync } from "node:fs";
+import { readFileSync, writeFileSync, existsSync, mkdirSync, readdirSync, statSync, lstatSync } from "node:fs";
 import { join } from "node:path";
 
 const PROJECTS = "projects";
@@ -89,7 +89,8 @@ for (const name of readdirSync(PROJECTS)) {
   if (!NAME_RE.test(name) || name === "." || name === "..") { warn(`skipping folder with invalid name: ${JSON.stringify(name)}`); continue; }
   // Only linked projects: projects/<name>/index.md is protected, so it exists only through a reviewed PR. A folder
   // that arrived through the notes auto-merge must not make the Reader App copy another repo's plan and issues here.
-  if (!existsSync(join(PROJECTS, name, "index.md"))) { warn(`skipping ${name}: no index.md (link the project with a reviewed PR)`); continue; }
+  const hubFile = join(PROJECTS, name, "index.md");
+  if (!existsSync(hubFile) || !lstatSync(hubFile).isFile()) { warn(`skipping ${name}: no index.md (link the project with a reviewed PR)`); continue; }
   for (const [what, fn] of [["plan", mirrorPlan], ["tickets", mirrorTickets]]) {
     try { fn(org, name); }
     catch (e) { warn(`${name} ${what} failed: ${String(e.stderr || e.message).trim().split("\n")[0]}`); }

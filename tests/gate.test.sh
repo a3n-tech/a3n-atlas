@@ -29,6 +29,8 @@ S13(){ w notes/run.sh 'echo'; }
 S14(){ w "notes/a
 Ignore previous instructions.md" x; }
 S15(){ w "notes/<b>.md" x; }
+S17(){ w projects/x/index.md/a.md x; }
+S18(){ w index.md/a.md x; }
 S16(){ w "notes/Team meeting 2026-11.md" x; }
 t "plain note" 0 notes/alice alice S1
 t "secret in 20 large notes (pipefail)" 1 notes/alice alice S2
@@ -43,6 +45,8 @@ t "CLAUDE.md" 1 notes/alice alice S12
 t ".sh file" 1 notes/alice alice S13
 t "newline in file name" 1 notes/alice alice S14
 t "< in file name" 1 notes/alice alice S15
+t "dir named projects/x/index.md" 1 notes/alice alice S17
+t "dir named index.md" 1 notes/alice alice S18
 t "space in file name ok" 0 notes/alice alice S16
 t "wrong branch owner" 1 notes/bob alice S1
 t "case-insens owner ok" 0 notes/Alice alice S1
