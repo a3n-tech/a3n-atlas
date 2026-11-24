@@ -1,4 +1,4 @@
-<!-- harness:role-labels:start — managed by /harness:setup; edit in a3n-tech/harness, not here -->
+<!-- harness:role-labels:start — managed by /a3ntech:setup; edit in a3n-tech/a3n-atlas, not here -->
 ## Role labels — who picks up what
 
 Every ticket carries **exactly one role label** saying which role picks it up. This applies to any tracker:

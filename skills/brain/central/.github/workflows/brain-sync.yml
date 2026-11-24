@@ -1,0 +1,74 @@
+name: brain-sync
+
+# People and agents push to a personal `notes/<github-login>` branch and open a PR to main (agents open it
+# automatically; on the GitHub web editor choose "Create a new branch and start a pull request").
+# This merges the PR automatically, but only when scripts/gate.sh passes.
+#
+# Trust: pull_request_target runs THIS file and scripts/gate.sh as they are on main, never the versions in
+# the PR, so a PR cannot rewrite its own check. The PR's commit is read as data only (git diff / git show);
+# nothing from it is executed. Forks are refused.
+# Limit: on GitHub Free, private repos have no branch protection, so a member with write access can still
+# push to main directly. This gate stops mistakes and outsiders, not a malicious member.
+on:
+  pull_request_target:
+    types: [opened, synchronize, reopened]
+    branches: [main]
+
+permissions:
+  contents: write
+  pull-requests: write
+
+# A newer push cancels the older run. The merge is pinned to the checked commit, so a cancelled run merges nothing wrong.
+concurrency:
+  group: brain-sync-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  merge-notes:
+    if: >-
+      startsWith(github.event.pull_request.head.ref, 'notes/') &&
+      github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      PR: ${{ github.event.pull_request.number }}
+      BRANCH: ${{ github.event.pull_request.head.ref }}
+      SHA: ${{ github.event.pull_request.head.sha }}
+      ACTOR: ${{ github.actor }}
+      AUTHOR: ${{ github.event.pull_request.user.login }}
+    steps:
+      # Trusted code: main's checkout (the default for pull_request_target). No credentials left on disk.
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.repository.default_branch }}
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Only plain notes, from their owner, may auto-merge
+        id: gate
+        run: |
+          # The PR author and whoever pushed this commit must both own the branch.
+          if [ "$(echo "$AUTHOR" | tr '[:upper:]' '[:lower:]')" != "$(echo "$ACTOR" | tr '[:upper:]' '[:lower:]')" ]; then
+            echo "::error::Pushed by $ACTOR on a PR opened by $AUTHOR. Needs a normal reviewed PR."; exit 1
+          fi
+          # fetch-depth 0 already brought every branch of this repo (forks are refused above), so the PR head is
+          # here without another fetch. persist-credentials is off, so a fetch would fail on a private repo anyway.
+          git cat-file -e "$SHA^{commit}" || { echo "::error::PR head $SHA not found in the checkout."; exit 1; }
+          base=$(git merge-base HEAD "$SHA")
+          rc=0
+          bash scripts/gate.sh "$base" "$SHA" "$BRANCH" "$ACTOR" > "$RUNNER_TEMP/gate.out" || rc=$?
+          case "$rc" in
+            0) echo "merge=yes" >> "$GITHUB_OUTPUT" ;;
+            3) echo "nothing to merge"; echo "merge=no" >> "$GITHUB_OUTPUT" ;;
+            *)
+              echo "::error::These changes need a normal reviewed PR:"
+              cat "$RUNNER_TEMP/gate.out"
+              exit 1 ;;
+          esac
+      - name: Merge the checked commit
+        if: steps.gate.outputs.merge == 'yes'
+        # --match-head-commit: if anything was pushed after the check, the merge is refused.
+        # Per-session branches (notes/<login>/<session>) are deleted after merging; a hand-edit branch notes/<login> stays.
+        run: |
+          del=""; case "$BRANCH" in notes/*/*) del="--delete-branch" ;; esac
+          gh pr merge "$PR" --repo "$GITHUB_REPOSITORY" --merge $del --match-head-commit "$SHA"

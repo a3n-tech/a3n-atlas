@@ -3,7 +3,7 @@
     "a3n-tech": {
       "source": {
         "source": "github",
-        "repo": "a3n-tech/harness"
+        "repo": "a3n-tech/a3n-atlas"
       }
     },
     "ponytail": {
@@ -22,7 +22,7 @@
     }
   },
   "enabledPlugins": {
-    "harness@a3n-tech": true,
+    "a3ntech@a3n-tech": true,
     "mattpocock-skills@claude-plugins-official": true,
     "ponytail@ponytail": true,
     "caveman@caveman": true,

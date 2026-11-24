@@ -1,6 +1,6 @@
-// git merge driver for .paul/** and brain/**: `node paul-merge.mjs %O %A %B %P`.
+// git merge driver for .paul/**: `node paul-merge.mjs %O %A %B %P`.
 // Asks Claude to merge both sides' intent. Writes the result to %A and exits 0.
-// On any doubt exits 1, which leaves a normal conflict for /harness:sync.
+// On any doubt exits 1, which leaves a normal conflict for /a3ntech:sync.
 import { readFileSync, writeFileSync, existsSync } from "node:fs";
 import { claude, hasSecret, log, CONFLICT_RE } from "./lib.mjs";
 
@@ -16,7 +16,7 @@ try {
 Produce the merged file that keeps BOTH sides' changes. Rules:
 - Keep every decision, issue reference (#N), log entry and table row from both sides; drop exact duplicates.
 - For single-value fields (current position, status, last activity, progress, next action) take the most recent/advanced value; if unclear, keep OURS and note THEIRS on the next line.
-- Keep the file's structure, frontmatter, headings and [[wikilinks]] exactly.
+- Keep the file's structure, frontmatter, headings and links exactly.
 - Output ONLY the merged file content. No code fence, no commentary.
 
 === BASE ===

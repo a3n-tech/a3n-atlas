@@ -1,14 +1,20 @@
 {
   "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
   "name": "a3n-tech",
-  "description": "a3n-tech team harness for Claude Code.",
-  "owner": { "name": "a3n-tech", "url": "https://github.com/a3n-tech" },
+  "description": "a3n-tech team plugins (Atlas).",
+  "owner": {
+    "name": "a3n-tech",
+    "url": "https://github.com/a3n-tech"
+  },
   "plugins": [
     {
-      "name": "harness",
-      "description": "Team harness: PAUL (milestones/phases) + mattpocock engineering skills (tickets/TDD/review), wired by one contract and a drift check.",
+      "name": "a3ntech",
+      "description": "Atlas: PAUL phases + mattpocock ticket skills, brain, session handoffs, roles and a plan drift check for the a3n-tech team.",
       "source": "./",
       "category": "productivity"
     }
+  ],
+  "allowCrossMarketplaceDependenciesOn": [
+    "claude-plugins-official"
   ]
 }

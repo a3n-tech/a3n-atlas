@@ -1,6 +1,6 @@
 ---
 name: seam
-description: Wire PAUL (milestones/phases) to the mattpocock engineering skills (GitHub tickets, TDD, review) so the two planning systems never disagree — writes the Execution Seam into .paul/SPECIAL-FLOWS.md, the agent summary into docs/agents/domain.md, installs the check:plan drift checker, creates triage labels, and verifies. Use this after /harness:setup or /paul:init, or whenever someone says set up paul + matt, wire the planning stack, connect phases to tickets, add check:plan, or when check:plan reports orphan/premature drift. Not for creating tickets (/to-tickets) or planning a phase (/paul:plan).
+description: Wire PAUL (milestones/phases) to the mattpocock engineering skills (GitHub tickets, TDD, review) so the two planning systems never disagree — writes the Execution Seam into .paul/SPECIAL-FLOWS.md, the agent summary into docs/agents/domain.md, installs the check:plan drift checker, creates triage labels, and verifies. Use this after /a3ntech:setup or /paul:init, or whenever someone says set up paul + matt, wire the planning stack, connect phases to tickets, add check:plan, or when check:plan reports orphan/premature drift. Not for creating tickets (/to-tickets) or planning a phase (/paul:plan).
 ---
 
 # PAUL + mattpocock seam
@@ -170,7 +170,13 @@ Do not commit unless asked; if asked, one commit, message
 ## Optional
 
 - **CI gate:** add a job running `{{CHECK_CMD}}` with `GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}`
-  and `issues: read` permission. Offer it; don't add it unasked.
+  and `issues: read` permission. Offer it; don't add it unasked. Triggers, exactly:
+  `pull_request` with `paths: ['.paul/**', 'scripts/check-plan-drift.mjs']` (skip drafts:
+  `types: [opened, synchronize, reopened, ready_for_review]` and `if: github.event.pull_request.draft == false`),
+  `push` to `main` with the same paths, and a daily `schedule`. Never `issues:`: each label change
+  spent a minute, and one repo burned 330 minutes in 3 weeks.
+  The checker fails closed on `gh` errors (exit 2). It expands ranges only when written `#5 – #18`
+  (en dash, at most 100 issues), so update plans that write `#5-#18`.
 
 ## Don'ts
 

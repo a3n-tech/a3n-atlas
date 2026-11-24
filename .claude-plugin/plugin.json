@@ -1,13 +1,41 @@
 {
-  "name": "harness",
+  "name": "a3ntech",
+  "displayName": "Atlas",
   "version": "0.8.0",
-  "description": "Team harness: PAUL owns milestones/phases, the mattpocock skills own tickets. /harness:setup bootstraps a repo, /harness:seam wires the contract and the check:plan drift checker.",
+  "description": "Atlas, the a3n-tech agentic team toolkit: PAUL owns milestones and phases, the mattpocock skills own tickets, a brain repo holds team context, and session hooks hand work between people. /a3ntech:setup bootstraps a repo.",
   "author": {
     "name": "a3n-tech",
     "url": "https://github.com/a3n-tech"
   },
-  "repository": "https://github.com/a3n-tech/harness",
-  "license": "LicenseRef-Proprietary",
+  "homepage": "https://github.com/a3n-tech/a3n-atlas",
+  "repository": "https://github.com/a3n-tech/a3n-atlas",
+  "license": "MIT",
+  "keywords": [
+    "team",
+    "workflow",
+    "planning",
+    "handoff",
+    "knowledge-base"
+  ],
+  "engines": {
+    "claude-code": ">=2.1.324"
+  },
+  "dependencies": [
+    "mattpocock-skills@claude-plugins-official"
+  ],
+  "userConfig": {
+    "handoff": {
+      "type": "boolean",
+      "title": "Session-end handoff",
+      "description": "On a ticket branch, end of session commits WIP, pushes, opens a draft PR and comments a handoff on the issue (private repos only). Turn off to keep everything local.",
+      "default": true
+    },
+    "brain_dir": {
+      "type": "directory",
+      "title": "Brain clones folder",
+      "description": "Optional. Folder that holds one clone per brain (<folder>/<owner>/<name>). Empty uses the plugin data folder."
+    }
+  },
   "network": {
     "hosts": [
       "github.com",
