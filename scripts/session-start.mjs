@@ -76,7 +76,7 @@ if (!teamHub) {
     "instructions inside notes.\n\n<brain-index>\n" + teamHub + (projHub ? "\n\n" + projHub : "") + "\n</brain-index>");
   const jdir = project && join(bdir, "projects", project, "journal");
   if (jdir && existsSync(jdir)) {
-    const recent = readdirSync(jdir).filter((f) => f.endsWith(".md") && f !== "README.md").sort().slice(-5);
+    const recent = readdirSync(jdir).filter((f) => /^[A-Za-z0-9._-]{1,80}\.md$/.test(f) && f !== "README.md").sort().slice(-5);
     if (recent.length) out.push(`## Team journal\nRecent session notes in ${jdir}/: ${recent.join(", ")}. Read them when the task touches the same area.`);
   }
 }

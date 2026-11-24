@@ -62,7 +62,7 @@ PRs from a `notes/*` branch that pass the gate merge into main on their own. Upd
   require a PR for main and keep reviews for the protected paths with CODEOWNERS.
 - Reader GitHub App (org-owned, free, no seat; survives people leaving). Create it under the org's Settings,
   Developer settings, GitHub Apps: no webhook; repository permissions Contents read, Issues read, Metadata read;
-  "Only on this account". Install it on the project repos (or all repos). In this repo set the variable
+  "Only on this account". Install it only on the project repos linked in the brain, not on all repos. In this repo set the variable
   `BRAIN_READER_APP_ID` and the secret `BRAIN_READER_PRIVATE_KEY` (the .pem). The mirror job mints a 1-hour token
   from it; there is nothing to rotate on a schedule. Keep this key only in this repo.
 - Optional Dispatch GitHub App, separate from the Reader App: repository permission Actions write, Metadata read,

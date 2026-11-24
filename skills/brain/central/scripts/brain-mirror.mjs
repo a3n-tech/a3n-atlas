@@ -87,6 +87,9 @@ const org = orgName();
 for (const name of readdirSync(PROJECTS)) {
   if (name === "project-template" || !statSync(join(PROJECTS, name)).isDirectory()) continue;
   if (!NAME_RE.test(name) || name === "." || name === "..") { warn(`skipping folder with invalid name: ${JSON.stringify(name)}`); continue; }
+  // Only linked projects: projects/<name>/index.md is protected, so it exists only through a reviewed PR. A folder
+  // that arrived through the notes auto-merge must not make the Reader App copy another repo's plan and issues here.
+  if (!existsSync(join(PROJECTS, name, "index.md"))) { warn(`skipping ${name}: no index.md (link the project with a reviewed PR)`); continue; }
   for (const [what, fn] of [["plan", mirrorPlan], ["tickets", mirrorTickets]]) {
     try { fn(org, name); }
     catch (e) { warn(`${name} ${what} failed: ${String(e.stderr || e.message).trim().split("\n")[0]}`); }

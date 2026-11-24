@@ -105,8 +105,11 @@ export const brainDir = () => opt("BRAIN_DIR") || process.env.HARNESS_BRAIN_DIR 
 /** Project folder name in the central brain: the GitHub repo name. Never the brain repo itself. */
 export function brainProject(root) {
   const repo = repoFromUrl(trySh("git", ["remote", "get-url", "origin"], { cwd: root }));
-  const name = repo?.split("/")[1];
-  return name && /^[A-Za-z0-9._-]+$/.test(name) && !name.startsWith(".") && repo !== brainRepo() ? name : null;
+  const [owner, name] = repo?.split("/") ?? [];
+  const brain = brainRepo();
+  // Same org as the brain only: a clone of someone-else/<name> must not read or write the team's projects/<name>/.
+  const sameOrg = brain && owner?.toLowerCase() === brain.split("/")[0].toLowerCase();
+  return sameOrg && name && /^[A-Za-z0-9._-]+$/.test(name) && !name.startsWith(".") && repo.toLowerCase() !== brain.toLowerCase() ? name : null;
 }
 
 /** Model output as three delimited sections (not JSON: one raw newline in a JSON string loses the whole handoff). */

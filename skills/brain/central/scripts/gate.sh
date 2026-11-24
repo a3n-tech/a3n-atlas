@@ -26,6 +26,10 @@ while IFS= read -r -d '' meta && IFS= read -r -d '' f; do
     100644|000000) ;;   # regular file, or deletion
     *) bad="$bad$f (mode $newmode: symlinks, executables and submodules need a reviewed PR)"$'\n'; continue ;;
   esac
+  # Paths reach agent context (file listings), so only plain characters: no newlines, quotes, brackets or "<".
+  if [[ ! $f =~ ^[A-Za-z0-9._\ /-]+$ ]]; then
+    bad="${bad}$(printf '%q' "$f") (file names may use letters, digits, space, dot, dash, underscore and /)"$'\n'; continue
+  fi
   if [[ $f =~ $protected ]] || [[ $f =~ (^|/)\. ]] || [[ $f =~ $agentfile ]]; then
     bad="$bad$f (protected: hubs, generated mirrors, scripts, CI, dot-paths and agent-instruction files need a reviewed PR)"$'\n'
   elif [[ $f =~ \.(md|png|jpg|jpeg|gif|webp|pdf)$ ]]; then

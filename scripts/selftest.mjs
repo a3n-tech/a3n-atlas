@@ -72,6 +72,8 @@ try { g("merge", "o"); } catch {}
 assert.equal(gitOperationInProgress(d), "MERGE_HEAD");
 g("remote", "add", "origin", "git@github.com:a3n-tech/shop-api.git");
 assert.equal(brainProject(d), "shop-api");
+g("remote", "set-url", "origin", "git@github.com:someone-else/shop-api.git");
+assert.equal(brainProject(d), null); // another org's repo never maps onto the team's projects/<name>/
 g("remote", "set-url", "origin", "https://github.com/a3n-tech/brain.git");
 assert.equal(brainProject(d), null); // the brain repo is not a project of itself
 console.log("git state ok");
