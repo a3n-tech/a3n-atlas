@@ -1,30 +1,35 @@
 // Detached from SessionEnd. Turns the session into team-visible context:
 //   ticket branch -> WIP commit (if secret-scan clean) + push + draft PR + AI handoff comment
 //   any branch    -> AI journal note in the central brain: projects/<repo>/journal/ (one file per session)
-// Never touches the default branch's history, never commits during a merge/rebase, never changes the
-// person's staging (the scan and commit use a private index).
-import { readFileSync, writeFileSync, existsSync, mkdirSync, rmSync, statSync, openSync, closeSync, copyFileSync } from "node:fs";
-import { join, dirname, resolve } from "node:path";
+// Never touches the default branch's history, never commits during a merge/rebase, never commits on a branch
+// other than the one the session ended on, never changes the person's staging (the scan and commit use a private
+// index). The journal is built straight on the brain's main with git plumbing: the brain clone is never touched.
+import { readFileSync, writeFileSync, existsSync, rmSync, copyFileSync, mkdtempSync } from "node:fs";
+import { join, dirname, resolve, basename } from "node:path";
+import { tmpdir } from "node:os";
 import { sh, trySh, issueFromBranch, hasSecret, redact, claude, log, HANDOFF_MARK, isHarnessRepo, SECRET_FILE_RE, repoFromUrl,
-  gitOperationInProgress, parseSections, brainDir, brainProject, brainRepo } from "./lib.mjs";
+  gitOperationInProgress, parseSections, brainDir, brainProject, brainRepo, acquireLock } from "./lib.mjs";
 
 const payloadFile = process.argv[2];
 let input;
-try { input = JSON.parse(readFileSync(payloadFile, "utf8")); } finally { try { rmSync(dirname(payloadFile), { recursive: true }); } catch {} }
+try { input = JSON.parse(readFileSync(payloadFile, "utf8")); } finally {
+  // Remove only what session-end created: the file, and its private mkdtemp dir. Never a caller's directory.
+  try { rmSync(payloadFile, { force: true }); if (basename(dirname(payloadFile)).startsWith("harness-handoff-")) rmSync(dirname(payloadFile), { recursive: true }); } catch {}
+}
 
-// One worker per repo at a time: two sessions ending together would race on the index and the push.
-let lock = null;
-try {
+// One worker per repo at a time (two sessions ending together would race on the index and the push). A second
+// worker waits its turn (up to 10 minutes) instead of dropping its handoff.
+let release = null;
+{
   const root = trySh("git", ["rev-parse", "--show-toplevel"], { cwd: input.cwd });
-  const gitDir = root && trySh("git", ["rev-parse", "--git-dir"], { cwd: root });
-  if (gitDir) {
-    lock = resolve(root, gitDir, "harness-handoff.lock");
-    try { if (Date.now() - statSync(lock).mtimeMs > 15 * 60_000) rmSync(lock); } catch {}
-    closeSync(openSync(lock, "wx"));
+  // --git-common-dir: sibling worktrees share one repo, so they share one lock.
+  const common = root && trySh("git", ["rev-parse", "--git-common-dir"], { cwd: root });
+  if (common) {
+    release = acquireLock(resolve(root, common, "harness-handoff.lock"), 10 * 60_000);
+    if (!release) { log(`handoff skip: another handoff held the lock for 10 minutes in ${input.cwd}`); process.exit(0); }
   }
-} catch { log(`handoff skip: another handoff is running in ${input.cwd}`); process.exit(0); }
-try { await main(); } catch (e) { log(`handoff error: ${e.message}`); } finally { if (lock) rmSync(lock, { force: true }); }
-
+}
+try { await main(); } catch (e) { log(`handoff error: ${e.message}`); } finally { release?.(); }
 
 function transcriptText(path) {
   if (!existsSync(path)) return "";
@@ -86,8 +91,13 @@ Diff stat:\n${diffStat}\n\nTRANSCRIPT:\n${transcript}`);
     return log(`handoff: origin ${repo ?? "unparseable"} visibility ${visibility ?? "unknown"} — kept local, no push/PR/comment`);
   }
   // The branch number must be a real open issue (not a PR, not closed): `3-way-merge` must not touch #3's thread.
-  const issueState = trySh("gh", ["issue", "view", String(issue), "-R", repo, "--json", "state", "-q", ".state"], { cwd: root });
-  if (issueState !== "OPEN") return log(`handoff: #${issue} is not an open issue (${issueState ?? "missing"}) — skipped`);
+  // `gh issue view` also answers for PR numbers, so check the URL too.
+  const issueState = trySh("gh", ["issue", "view", String(issue), "-R", repo, "--json", "state,url", "-q", '.state + " " + .url'], { cwd: root });
+  const [state, url] = (issueState || "").split(" ");
+  if (state !== "OPEN" || !/\/issues\/\d+$/.test(url || "")) return log(`handoff: #${issue} is not an open issue (${issueState ?? "missing"}) — skipped`);
+  // The session may have ended a while ago (the model call above takes time): only act if HEAD is still this branch.
+  const sameBranch = () => tryGit("branch", "--show-current") === branch;
+  if (!sameBranch()) return log(`handoff: HEAD moved off ${branch} before the WIP commit — skipped`);
 
   // WIP commit, but only if nothing in the change looks like a secret.
   // graphify-out/ is rebuilt by CI on main; a PR that carries it conflicts with every other PR.
@@ -102,6 +112,8 @@ Diff stat:\n${diffStat}\n\nTRANSCRIPT:\n${transcript}`);
     const gi = (...a) => trySh("git", a, { cwd: root, env });
     try {
       if (existsSync(realIndex)) copyFileSync(realIndex, tmpIndex);
+      // Anything already staged under graphify-out/ goes back to HEAD's version: excluded paths are never committed.
+      gi("reset", "-q", "HEAD", "--", "graphify-out");
       gi("add", "-A", ...KEEP_OUT);
       // Fail closed: an unreadable diff, a binary, or a credential-shaped filename holds everything back.
       const diff = gi("diff", "--cached", "HEAD", ...KEEP_OUT);
@@ -118,7 +130,9 @@ Diff stat:\n${diffStat}\n\nTRANSCRIPT:\n${transcript}`);
         notes.push(`⚠️ Uncommitted changes were **held back on the author's machine**: ${reason}. The author must review and commit them.`);
       } else if (files.length) {
         // [skip ci]: half-done WIP is not worth CI minutes; the next real commit runs CI.
-        if (gi("commit", "-q", "-m", `wip(#${issue}): session handoff [skip ci]`) === null) {
+        if (!sameBranch()) {
+          notes.push(`⚠️ HEAD moved off \`${branch}\` while the handoff ran. Nothing was committed or pushed.`);
+        } else if (gi("commit", "-q", "-m", `wip(#${issue}): session handoff [skip ci]`) === null) {
           notes.push("⚠️ The WIP commit failed (a pre-commit hook?). Changes are still uncommitted on the author's machine.");
         } else {
           tryGit("reset", "-q"); // real index -> new HEAD: everything is committed, nothing left staged
@@ -128,8 +142,10 @@ Diff stat:\n${diffStat}\n\nTRANSCRIPT:\n${transcript}`);
   }
 
   // Push the ticket branch and make sure a draft PR exists.
-  if (tryGit("push", "-u", "origin", "HEAD") === null) notes.push("⚠️ Push failed — branch may be behind; next session should pull/rebase.");
-  const pr = trySh("gh", ["pr", "view", branch, "-R", repo, "--json", "url", "-q", ".url"], { cwd: root });
+  // Push the named branch, never whatever HEAD is now.
+  if (tryGit("push", "-u", "origin", `refs/heads/${branch}:refs/heads/${branch}`) === null) notes.push("⚠️ Push failed — branch may be behind; next session should pull/rebase.");
+  // Only an OPEN PR counts: `gh pr view <branch>` would also return an old merged one.
+  const pr = trySh("gh", ["pr", "list", "-R", repo, "--head", branch, "--state", "open", "--json", "url", "-q", ".[0].url"], { cwd: root });
   let prUrl = pr;
   if (!pr) {
     const title = trySh("gh", ["issue", "view", String(issue), "-R", repo, "--json", "title", "-q", ".title"], { cwd: root }) || branch;
@@ -144,35 +160,43 @@ Diff stat:\n${diffStat}\n\nTRANSCRIPT:\n${transcript}`);
 
 function writeJournal(root, { journal, title, author, branch, issue }) {
   const project = brainProject(root);
-  const bdir = brainDir();
-  const pdir = project && join(bdir, "projects", project);
-  if (!pdir || !existsSync(pdir)) return log(`journal skip: ${project ?? "repo"} not linked in the central brain`);
-  const b = (...a) => trySh("git", a, { cwd: bdir, timeout: 60_000 });
-  const login = trySh("gh", ["api", "user", "-q", ".login"]);
-  if (!login || b("branch", "--show-current") !== `notes/${login}`) return log("journal skip: brain clone not on notes/<login> (brain-pull fixes it next session)");
-  // Never send a private project's notes to a public brain.
-  const vis = trySh("gh", ["repo", "view", brainRepo(), "--json", "visibility", "-q", ".visibility"]);
-  if (vis !== "PRIVATE" && vis !== "INTERNAL") return log(`journal skip: brain repo visibility ${vis ?? "unknown"}`);
-  const dir = join(pdir, "journal");
-  mkdirSync(dir, { recursive: true });
-  const slug = String(title || "session").replace(/[^a-z0-9-]/gi, "").slice(0, 40) || "session";
-  const file = join(dir, `${new Date().toISOString().slice(0, 10)}-${slug}-${String(input.session_id || "").replace(/[^\w-]/g, "").slice(0, 8)}.md`);
-  const yaml = (v) => JSON.stringify(String(v)); // quoted scalar: names/branches can't break the frontmatter
-  writeFileSync(file, `---\ntype: journal\nproject: ${yaml(project)}\nauthor: ${yaml(author)}\nbranch: ${yaml(branch)}\n` +
-    `${issue ? `issue: ${issue}\n` : ""}date: ${new Date().toISOString()}\n---\n\n${journal}\n`);
-  b("add", "--", file);
-  if (b("commit", "-q", "-m", `journal(${project}): session notes`, "--", file) === null) return log("journal: commit failed");
-  // Remote may be ahead (another machine pushed): merge it, retry once.
-  if (b("push", "-q", "origin", `notes/${login}`) === null) {
-    b("fetch", "-q", "origin");
-    b("merge", "-q", "--no-edit", `origin/notes/${login}`);
-    if (b("push", "-q", "origin", `notes/${login}`) === null) return log("journal: push failed; it goes out with the next push");
-  }
-  // The brain's gate runs on a PR (pull_request_target). Open it with the person's token: GitHub starts no
-  // workflow for a PR opened by GITHUB_TOKEN. One PR per person stays open; later pushes update it.
   const repo = brainRepo();
-  const open = trySh("gh", ["pr", "list", "-R", repo, "--head", `notes/${login}`, "--state", "open", "--json", "number", "-q", ".[0].number"]);
-  if (!open && trySh("gh", ["pr", "create", "-R", repo, "--base", "main", "--head", `notes/${login}`,
-    "--title", `notes: ${login}`, "--body", "Session notes. Merged automatically when the brain gate passes."]) === null) log("journal: could not open the notes PR");
-  log(`journal pushed ${project} ${file}`);
+  const bdir = brainDir();
+  if (!project || !repo || !existsSync(join(bdir, ".git"))) return log(`journal skip: ${project ?? "repo"} has no brain clone yet`);
+  const b = (...a) => trySh("git", a, { cwd: bdir, timeout: 60_000 });
+  if (b("fetch", "-q", "origin", "main") === null) return log("journal skip: could not fetch the brain");
+  // Linked = projects/<p>/index.md exists as a file on the brain's reviewed main (it only arrives through a PR).
+  if (b("cat-file", "-t", `origin/main:projects/${project}/index.md`) !== "blob") return log(`journal skip: ${project} is not linked in the brain`);
+  // Never send a private project's notes to a public brain.
+  const vis = trySh("gh", ["repo", "view", repo, "--json", "visibility", "-q", ".visibility"]);
+  if (vis !== "PRIVATE" && vis !== "INTERNAL") return log(`journal skip: brain repo visibility ${vis ?? "unknown"}`);
+  const login = trySh("gh", ["api", "user", "-q", ".login"]);
+  if (!login || !/^[A-Za-z0-9-]{1,39}$/.test(login)) return log("journal skip: no gh login");
+
+  const slug = String(title || "session").replace(/[^a-z0-9-]/gi, "").slice(0, 40) || "session";
+  const sid = String(input.session_id || Date.now()).replace(/[^\w-]/g, "").slice(0, 8) || "session";
+  const path = `projects/${project}/journal/${new Date().toISOString().slice(0, 10)}-${slug}-${sid}.md`;
+  const yaml = (v) => JSON.stringify(String(v)); // quoted scalar: names/branches can't break the frontmatter
+  const text = `---\ntype: journal\nproject: ${yaml(project)}\nauthor: ${yaml(author)}\nbranch: ${yaml(branch)}\n` +
+    `${issue ? `issue: ${issue}\n` : ""}date: ${new Date().toISOString()}\n---\n\n${journal}\n`;
+
+  // One commit on top of the brain's main, built in a throwaway index: no checkout, no shared branch, nothing to
+  // race with or merge. Its own branch notes/<login>/<session> and its own PR; the gate merges and deletes it.
+  const tmp = mkdtempSync(join(tmpdir(), "harness-journal-"));
+  try {
+    const env = { ...process.env, GIT_INDEX_FILE: join(tmp, "index") };
+    const g = (args, input) => trySh("git", args, { cwd: bdir, env, input, timeout: 60_000 });
+    const blob = g(["hash-object", "-w", "--stdin"], text);
+    const ok = blob && g(["read-tree", "origin/main"]) !== null && g(["update-index", "--add", "--cacheinfo", `100644,${blob},${path}`]) !== null;
+    const tree = ok && g(["write-tree"]);
+    const commit = tree && g(["commit-tree", tree, "-p", "origin/main", "-m", `journal(${project}): session notes`]);
+    if (!commit) return log("journal: could not build the commit");
+    const head = `notes/${login}/${sid}`;
+    if (b("push", "-q", "origin", `${commit}:refs/heads/${head}`) === null) return log(`journal: push of ${head} failed`);
+    // The gate runs on the PR (pull_request_target). Open it with the person's token: GitHub starts no workflow for
+    // a PR opened by GITHUB_TOKEN.
+    if (trySh("gh", ["pr", "create", "-R", repo, "--base", "main", "--head", head, "--title", `notes: ${project} (${login})`,
+      "--body", "Session notes. Merged automatically when the brain gate passes."]) === null) return log(`journal: pushed ${head} but could not open its PR`);
+    log(`journal pushed ${path} as ${head}`);
+  } finally { rmSync(tmp, { recursive: true, force: true }); }
 }

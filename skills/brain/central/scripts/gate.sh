@@ -6,10 +6,12 @@
 set -eo pipefail
 [ "$#" -eq 4 ] || { echo "usage: gate.sh <base> <head> <branch> <actor>" >&2; exit 2; }
 base=$1 head=$2 branch=$3 actor=$4
-lc() { printf '%s' "$1" | tr 'A-Z' 'a-z'; }
+lc() { printf '%s' "$1" | tr '[:upper:]' '[:lower:]'; }
 
-if [ "$(lc "$branch")" != "notes/$(lc "$actor")" ]; then
-  echo "Auto-merge only for your own branch notes/$actor (pushed $branch). Open a normal PR instead."
+# Your own branch only: notes/<login> (hand edits) or notes/<login>/<anything> (one per agent session).
+b=$(lc "$branch") a=$(lc "$actor")
+if [ "$b" != "notes/$a" ] && [[ "$b" != "notes/$a/"* ]]; then
+  echo "Auto-merge only for your own branches notes/$actor or notes/$actor/... (pushed $branch). Open a normal PR instead."
   exit 1
 fi
 
@@ -17,7 +19,8 @@ bad=""; n=0
 # Case-insensitive: macOS filesystems fold case, so Projects/X/INDEX.MD is projects/x/index.md.
 shopt -s nocasematch
 protected='^(index\.md(/.*)?|projects/[^/]+/index\.md(/.*)?|projects/[^/]+/plan/.*|projects/[^/]+/tickets/.*|project-template/.*|scripts/.*|\.github/.*)$'
-agentfile='(^|/)(claude|agents|gemini|skill|copilot-instructions)\.md$'
+# Also CLAUDE.local.md, AGENTS.override.md and similar variants: agents load those as instructions too.
+agentfile='(^|/)(claude|agents|gemini|skill|copilot-instructions)(\.[a-z0-9_-]+)?\.md$'
 # --raw -z: ":oldmode newmode oldsha newsha status\0path\0". No rename detection: a rename is delete+add.
 while IFS= read -r -d '' meta && IFS= read -r -d '' f; do
   n=$((n+1))

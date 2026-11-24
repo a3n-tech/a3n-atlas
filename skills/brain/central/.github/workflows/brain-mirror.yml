@@ -43,7 +43,7 @@ jobs:
       - name: Commit and push if changed
         id: push
         run: |
-          git add projects/*/plan projects/*/tickets
+          git add -A -- projects   # a glob that matches nothing would fail the step on a new brain
           if git diff --cached --quiet; then echo "pushed=no" >> "$GITHUB_OUTPUT"; exit 0; fi
           git -c user.name="brain-bot" -c user.email="brain-bot@users.noreply.github.com" \
             commit -m "chore(brain): refresh plan and tickets mirror"

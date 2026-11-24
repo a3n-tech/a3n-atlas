@@ -1,6 +1,6 @@
 // Shared helpers for the harness hooks. No dependencies: node + git + gh + claude.
 import { execFileSync, execFile } from "node:child_process";
-import { appendFileSync, mkdirSync, readFileSync, existsSync } from "node:fs";
+import { appendFileSync, mkdirSync, readFileSync, existsSync, openSync, writeSync, closeSync, rmSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { homedir } from "node:os";
 
@@ -16,11 +16,12 @@ export function trySpawn(cmd, args, opts = {}) {
     (err, out) => res(err ? null : out.trim())));
 }
 
-/** Issue number from a ticket branch: `12-login`, `issue-12`, `feat/12-login`, `gh-12_x`.
+/** Issue number from a ticket branch: `12-login`, `issue-12`, `feat/12-login`, `feature/12-x`, `gh-12_x`.
  *  Only conventional prefixes count, so `hotfix/500-error` or `release/2026-11` are not tickets.
- *  Callers still confirm the issue exists and is open before acting on it. */
+ *  Callers still confirm the number is an open issue (not a PR) before acting on it. */
+const BRANCH_TYPES = "feat|feature|fix|bugfix|chore|docs|refactor|test|perf|ci|build|style|task|story";
 export function issueFromBranch(branch) {
-  const m = /^(?:(?:feat|fix|chore|docs|refactor|test|perf|ci|build|style)\/)?(?:issue-|gh-)?(\d{1,6})(?:[-_]|$)/.exec(branch || "");
+  const m = new RegExp(`^(?:(?:${BRANCH_TYPES})\\/)?(?:issue-|gh-)?(\\d{1,6})(?:[-_]|$)`).exec(branch || "");
   return m && Number(m[1]) > 0 ? Number(m[1]) : null;
 }
 
@@ -116,4 +117,24 @@ export function brainProject(root) {
 export function parseSections(raw) {
   const get = (name) => (new RegExp(`^=== ${name} ===\\s*$([\\s\\S]*?)(?=^=== [A-Z]+ ===\\s*$|(?![\\s\\S]))`, "m").exec(raw || "")?.[1] || "").trim();
   return { handoff: get("HANDOFF"), journal: get("JOURNAL"), title: get("TITLE") };
+}
+
+/** Exclusive lock file holding our pid. A lock whose pid is gone is stale and taken over. Waits up to
+ *  waitMs (polling), so a second session end queues behind the first instead of being dropped.
+ *  Returns a release function, or null if the lock stayed busy. */
+export function acquireLock(path, waitMs = 0) {
+  const until = Date.now() + waitMs;
+  for (;;) {
+    try {
+      const fd = openSync(path, "wx");
+      writeSync(fd, String(process.pid)); closeSync(fd);
+      return () => { try { if (readFileSync(path, "utf8") === String(process.pid)) rmSync(path); } catch {} };
+    } catch {
+      let pid = 0; try { pid = Number(readFileSync(path, "utf8")); } catch {}
+      let alive = false; try { if (pid) { process.kill(pid, 0); alive = true; } } catch (e) { alive = e.code === "EPERM"; }
+      if (!alive) { try { if (Number(readFileSync(path, "utf8")) === pid) rmSync(path); } catch {} continue; }
+      if (Date.now() >= until) return null;
+      Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 2000);
+    }
+  }
 }

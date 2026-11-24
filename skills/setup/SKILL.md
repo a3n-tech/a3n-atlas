@@ -87,13 +87,16 @@ Merge `${CLAUDE_SKILL_DIR}/project-settings.json` into `.claude/settings.json`:
 - File missing → copy it.
 - File exists → read it, add only missing keys under `extraKnownMarketplaces` and
   `enabledPlugins`. Never drop or change existing keys. Keep formatting.
+- Also remove an `enabledPlugins` key `superpowers@claude-plugins-official` (dropped from Atlas: it duplicates the
+  planning, TDD and debugging flow that PAUL and the mattpocock skills own). Say so in the report.
 - One exception, the rename to Atlas: replace an `enabledPlugins` key `harness` + `@a3n-tech` with
   `a3ntech@a3n-tech`, and set the `a3n-tech` marketplace `repo` to `a3n-tech/atlas`. Say so in the report.
 
 This pins the repo-level tools: the token savers `ponytail` (smallest working change) and
 `caveman` (terse output), plus `claude-code-skills`. `enabledPlugins` does not install anything.
-Each person installs Atlas once (below); `mattpocock-skills` and `superpowers` come with it as
-dependencies.
+Each person installs Atlas once (below); `mattpocock-skills` comes with it as a dependency.
+If they still have the old `harness` plugin, uninstall it first (`claude plugin uninstall harness@a3n-tech`), or both
+sets of hooks run.
 
 Person-level install, if the teammate has not done it (needs Claude Code 2.1.324+):
 

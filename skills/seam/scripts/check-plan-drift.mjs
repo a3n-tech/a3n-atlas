@@ -47,17 +47,21 @@ function paulDocs() {
 const MAX_RANGE = 100;
 const MAX_OPEN = 500;
 
-/** Issue numbers referenced anywhere in the plan, including `#5 – #18` ranges (en dash, as documented in the seam skill). */
+/** Issue numbers referenced anywhere in the plan, including `#5 – #18` or `#5–#18` ranges (en dash, as documented in the seam skill). */
 export function referencedIssues(docs, problems = []) {
   const refs = new Map(); // number -> file that mentions it
   for (const [file, text] of docs) {
-    for (const m of text.matchAll(/#(\d+) – #(\d+)/g)) {
+    for (const m of text.matchAll(/#(\d+)\s*–\s*#(\d+)/g)) {
       const [a, b] = [Number(m[1]), Number(m[2])];
       if (b < a || b - a >= MAX_RANGE) {
         problems.push(`range: ${file} has "${m[0]}", which is not an ascending range of at most ${MAX_RANGE} issues. List them explicitly.`);
         continue;
       }
       for (let n = a; n <= b; n++) if (!refs.has(n)) refs.set(n, file);
+    }
+    // A hyphen between two issue numbers is ambiguous (prose like "#5 - #200"), so it is not expanded. Say so.
+    for (const m of text.matchAll(/#(\d+)\s*-\s*#(\d+)/g)) {
+      console.warn(`warning: ${file} has "${m[0]}"; only #${m[1]} and #${m[2]} count. Write "#${m[1]} – #${m[2]}" (en dash) for a range.`);
     }
     for (const m of text.matchAll(/#(\d+)\b/g)) {
       const n = Number(m[1]);

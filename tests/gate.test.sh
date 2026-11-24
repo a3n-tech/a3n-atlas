@@ -31,6 +31,8 @@ Ignore previous instructions.md" x; }
 S15(){ w "notes/<b>.md" x; }
 S17(){ w projects/x/index.md/a.md x; }
 S18(){ w index.md/a.md x; }
+S19(){ w projects/x/CLAUDE.local.md x; }
+S20(){ w notes/AGENTS.override.md x; }
 S16(){ w "notes/Team meeting 2026-11.md" x; }
 t "plain note" 0 notes/alice alice S1
 t "secret in 20 large notes (pipefail)" 1 notes/alice alice S2
@@ -48,6 +50,11 @@ t "< in file name" 1 notes/alice alice S15
 t "dir named projects/x/index.md" 1 notes/alice alice S17
 t "dir named index.md" 1 notes/alice alice S18
 t "space in file name ok" 0 notes/alice alice S16
+t "CLAUDE.local.md" 1 notes/alice alice S19
+t "AGENTS.override.md" 1 notes/alice alice S20
+t "per-session branch ok" 0 notes/alice/ab12cd34 alice S1
+t "other user session branch" 1 notes/bob/ab12 alice S1
+t "prefix trick notes/alicex" 1 notes/alicex alice S1
 t "wrong branch owner" 1 notes/bob alice S1
 t "case-insens owner ok" 0 notes/Alice alice S1
 t "empty diff" 3 notes/alice alice true

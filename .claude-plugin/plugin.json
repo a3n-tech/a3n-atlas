@@ -10,11 +10,18 @@
   "homepage": "https://github.com/a3n-tech/atlas",
   "repository": "https://github.com/a3n-tech/atlas",
   "license": "LicenseRef-Proprietary",
-  "keywords": ["team", "workflow", "planning", "handoff", "knowledge-base"],
-  "engines": { "claude-code": ">=2.1.324" },
+  "keywords": [
+    "team",
+    "workflow",
+    "planning",
+    "handoff",
+    "knowledge-base"
+  ],
+  "engines": {
+    "claude-code": ">=2.1.324"
+  },
   "dependencies": [
-    "mattpocock-skills@claude-plugins-official",
-    "superpowers@claude-plugins-official"
+    "mattpocock-skills@claude-plugins-official"
   ],
   "userConfig": {
     "handoff": {

@@ -20,8 +20,8 @@ claude plugin marketplace add a3n-tech/atlas
 claude plugin install a3ntech@a3n-tech
 ```
 
-Or use `/plugin ...` inside Claude Code. `mattpocock-skills` and `superpowers` install automatically as
-dependencies. `ponytail`, `caveman` and `claude-code-skills` stay as repo-level pins in `.claude/settings.json`,
+Or use `/plugin ...` inside Claude Code. `mattpocock-skills` installs automatically as a dependency.
+Had the old `harness` plugin? Remove it first, or both sets of hooks run: `claude plugin uninstall harness@a3n-tech`. `ponytail`, `caveman` and `claude-code-skills` stay as repo-level pins in `.claude/settings.json`,
 written by setup. Opening a repo does not install anything: `enabledPlugins` only enables what is already installed.
 
 Update with `claude plugin update a3ntech@a3n-tech`, or turn on auto-update for the marketplace in `/plugin`.
@@ -56,7 +56,7 @@ Commit the result so the rest of the team gets it.
 
 One org repo, `a3n-tech/brain`, with `projects/<repo-name>/` per project. At session start the plugin keeps a
 local clone current in the background and injects the team hub and the project hub. Session journals go to
-`projects/<repo>/journal/` on the person's `notes/<github-login>` branch, and the brain's CI gate auto-merges
+`projects/<repo>/journal/`, each as its own branch `notes/<github-login>/<session>` and PR, and the brain's CI gate auto-merges
 plain notes. `/a3ntech:brain` bootstraps the brain repo (once per org), links a project repo, and migrates an
 old per-repo `brain/` folder. Details: `skills/brain/central/README.md`.
 
@@ -117,4 +117,4 @@ Change rules in `skills/setup/team-rules.md`, bump `version` in `.claude-plugin/
 | `skills/setup/project-settings.json` | repo-level plugin pins merged into `.claude/settings.json` |
 | `evals/` | trigger evals: `claude plugin eval . --runs 2` (needs git 2.31+) |
 
-Tests: `node scripts/selftest.mjs` and `node skills/seam/scripts/check-plan-drift.test.mjs`.
+Tests: `node scripts/selftest.mjs`, `node skills/seam/scripts/check-plan-drift.test.mjs`, `bash -eo pipefail tests/gate.test.sh` and `bash tests/hooks.test.sh` (stubbed gh and claude, no network).

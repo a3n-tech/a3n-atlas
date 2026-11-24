@@ -8,7 +8,7 @@
 - `/implement` per ticket with `/tdd` (red → green)
 - `engineering-skills:senior-backend`, `engineering-skills:stripe-integration-expert`
 - `engineering-advanced-skills:api-design-reviewer`, `sql-database-assistant`
-- `superpowers:systematic-debugging` for bugs
+- `mattpocock-skills:diagnosing-bugs` for bugs
 - `/code-review` before requesting review
 
 **Always:**

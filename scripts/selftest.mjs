@@ -50,6 +50,8 @@ console.log("personal lens ok");
 // Branch parsing: only conventional prefixes are tickets.
 for (const b of ["hotfix/500-error", "release/2026-11", "renovate/node-18", "v2-release", "0-zero"]) assert.equal(issueFromBranch(b), null, b);
 assert.equal(issueFromBranch("fix/7_crash"), 7);
+assert.equal(issueFromBranch("feature/42-login"), 42);
+assert.equal(issueFromBranch("bugfix/9-x"), 9);
 import { parseSections, gitOperationInProgress, handoffEnabled, brainProject } from "./lib.mjs";
 assert.deepEqual(parseSections("noise\n=== HANDOFF ===\n- a \"q\"\n=== JOURNAL ===\n\n=== TITLE ===\nslug\n"),
   { handoff: '- a "q"', journal: "", title: "slug" });

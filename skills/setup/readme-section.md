@@ -19,7 +19,7 @@ work with Claude Code. Source and changelog: [a3n-tech/atlas](https://github.com
    git --version                      # 2.31+ (macOS: brew install git)
    brew install uv                    # or pipx — used to install graphify
    ```
-3. Install Atlas (needs Claude Code 2.1.324+). `mattpocock-skills` and `superpowers` install with it:
+3. Install Atlas (needs Claude Code 2.1.324+). `mattpocock-skills` installs with it. If you had the old `harness` plugin? Remove it first, or both sets of hooks run: `claude plugin uninstall harness@a3n-tech`.:
    ```bash
    claude plugin marketplace add a3n-tech/atlas
    claude plugin install a3ntech@a3n-tech
@@ -98,7 +98,7 @@ Nothing to set up per repo: `/a3ntech:brain` links it (once).
    then push the branch. Use GitHub's "Update branch" first so you start from the latest notes.
 3. The brain's CI gate merges plain notes into `main`. Protected files need a normal PR.
 
-Session journals from Claude go to `projects/<repo>/journal/` on your `notes/<github-login>` branch the same way.
+Session journals from Claude go to `projects/<repo>/journal/`, each on its own branch `notes/<github-login>/<session>` with its own PR, merged the same way.
 Auto-merge accepts only notes (`.md`) and images from the branch owner with no secret patterns. Hubs, mirrors,
 dot-paths, scripts and workflows need a normal reviewed PR. Never put passwords or keys in a note.
 

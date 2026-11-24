@@ -51,8 +51,9 @@ jobs:
           if [ "$(echo "$AUTHOR" | tr '[:upper:]' '[:lower:]')" != "$(echo "$ACTOR" | tr '[:upper:]' '[:lower:]')" ]; then
             echo "::error::Pushed by $ACTOR on a PR opened by $AUTHOR. Needs a normal reviewed PR."; exit 1
           fi
-          git fetch -q origin "refs/pull/$PR/head"
-          [ "$(git rev-parse FETCH_HEAD)" = "$SHA" ] || { echo "::error::PR head moved; the next run checks it."; exit 1; }
+          # fetch-depth 0 already brought every branch of this repo (forks are refused above), so the PR head is
+          # here without another fetch. persist-credentials is off, so a fetch would fail on a private repo anyway.
+          git cat-file -e "$SHA^{commit}" || { echo "::error::PR head $SHA not found in the checkout."; exit 1; }
           base=$(git merge-base HEAD "$SHA")
           rc=0
           bash scripts/gate.sh "$base" "$SHA" "$BRANCH" "$ACTOR" > "$RUNNER_TEMP/gate.out" || rc=$?
@@ -67,4 +68,7 @@ jobs:
       - name: Merge the checked commit
         if: steps.gate.outputs.merge == 'yes'
         # --match-head-commit: if anything was pushed after the check, the merge is refused.
-        run: gh pr merge "$PR" --repo "$GITHUB_REPOSITORY" --merge --match-head-commit "$SHA"
+        # Per-session branches (notes/<login>/<session>) are deleted after merging; a hand-edit branch notes/<login> stays.
+        run: |
+          del=""; case "$BRANCH" in notes/*/*) del="--delete-branch" ;; esac
+          gh pr merge "$PR" --repo "$GITHUB_REPOSITORY" --merge $del --match-head-commit "$SHA"

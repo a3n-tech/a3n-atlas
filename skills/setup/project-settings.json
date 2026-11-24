@@ -31,7 +31,6 @@
   "enabledPlugins": {
     "a3ntech@a3n-tech": true,
     "mattpocock-skills@claude-plugins-official": true,
-    "superpowers@claude-plugins-official": true,
     "ponytail@ponytail": true,
     "caveman@caveman": true,
     "engineering-skills@claude-code-skills": true,
