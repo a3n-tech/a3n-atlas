@@ -45,7 +45,7 @@ Merge `${CLAUDE_SKILL_DIR}/project-settings.json` into `.claude/settings.json`:
 - File exists → read it, add only missing keys under `extraKnownMarketplaces` and
   `enabledPlugins`. Never drop or change existing keys. Keep formatting.
 - One exception, the rename to Atlas: replace an `enabledPlugins` key `harness` + `@a3n-tech` with
-  `a3ntech@a3n-tech`, and set the `a3n-tech` marketplace `repo` to `a3n-tech/atlas`. Say so in the report.
+  `a3ntech@a3n-tech`, and set the `a3n-tech` marketplace `repo` to `a3n-tech/a3n-atlas`. Say so in the report.
 
 This pins the repo-level tools: the token savers `ponytail` (smallest working change) and
 `caveman` (terse output). `enabledPlugins` does not install anything.
@@ -57,7 +57,7 @@ Person-level install, if the teammate has not done it (needs Claude Code 2.1.324
 
 ```bash
 gh auth login && gh auth setup-git    # the marketplace is private; or use an SSH key
-claude plugin marketplace add a3n-tech/atlas
+claude plugin marketplace add a3n-tech/a3n-atlas
 claude plugin install a3ntech@a3n-tech
 ```
 
@@ -65,7 +65,7 @@ Updates: `claude plugin update a3ntech@a3n-tech`, or turn on auto-update for the
 
 Third-party marketplaces (ponytail, caveman) are **pinned to reviewed commits** via `ref` (full SHA;
 needs Claude Code 2.1.324+). Keep the pins from the template. Bumping a pin is a deliberate PR to
-`a3n-tech/atlas`: review the upstream diff of its hooks (network calls, exec, file access) first.
+`a3n-tech/a3n-atlas`: review the upstream diff of its hooks (network calls, exec, file access) first.
 
 Never write to `.claude/settings.local.json` — that is personal and not committed.
 

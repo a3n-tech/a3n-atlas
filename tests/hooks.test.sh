@@ -45,7 +45,7 @@ git checkout -qb 12-feat
 # Brain: bare remote with a linked project; clone stays on main.
 git init -q --bare -b main "$T/brain.git"
 git clone -q "$T/brain.git" "$T/seed" 2>/dev/null; cd "$T/seed"; git config user.email a@a; git config user.name a
-echo "# team hub" > index.md; mkdir -p projects/app; echo "# app hub" > projects/app/index.md; git add -A; git commit -qm init; git push -q origin HEAD:main
+echo "# team hub" > index.md; mkdir -p projects/app; printf -- "---\ntype: project-hub\nrepo: acme/app\n---\n# app hub\n" > projects/app/index.md; git add -A; git commit -qm init; git push -q origin HEAD:main
 git clone -q "$T/brain.git" "$T/brainclone"; git -C "$T/brainclone" config user.email a@a; git -C "$T/brainclone" config user.name a
 cd "$T/app"
 
@@ -94,6 +94,12 @@ ok "brain clone still on clean main" '[ "$(git -C "$T/brainclone" branch --show-
 git remote set-url origin https://github.com/acme/other.git
 run s6
 ok "unlinked repo: no journal branch" '! git --git-dir="$T/brain.git" for-each-ref refs/heads/notes/alice | grep -q s6'
+git remote set-url origin https://github.com/acme/app.git
+
+# 6b. Same repo name under another owner: the hub's repo: line does not match, so no journal.
+git remote set-url origin https://github.com/someone-else/app.git
+HARNESS_BRAIN_REPO=acme/brain run s6b
+ok "other owner, same name: no journal" '! git --git-dir="$T/brain.git" for-each-ref refs/heads/notes/alice | grep -q s6b'
 git remote set-url origin https://github.com/acme/app.git
 
 # 7. Session start reads hubs from origin/main, not the working tree.

@@ -52,7 +52,7 @@ for (const b of ["hotfix/500-error", "release/2026-11", "renovate/node-18", "v2-
 assert.equal(issueFromBranch("fix/7_crash"), 7);
 assert.equal(issueFromBranch("feature/42-login"), 42);
 assert.equal(issueFromBranch("bugfix/9-x"), 9);
-import { parseSections, gitOperationInProgress, handoffEnabled, brainProject } from "./lib.mjs";
+import { parseSections, gitOperationInProgress, handoffEnabled, brainProject, brainRepo, hubRepo } from "./lib.mjs";
 assert.deepEqual(parseSections("noise\n=== HANDOFF ===\n- a \"q\"\n=== JOURNAL ===\n\n=== TITLE ===\nslug\n"),
   { handoff: '- a "q"', journal: "", title: "slug" });
 assert.deepEqual(parseSections("garbage"), { handoff: "", journal: "", title: "" });
@@ -74,8 +74,11 @@ try { g("merge", "o"); } catch {}
 assert.equal(gitOperationInProgress(d), "MERGE_HEAD");
 g("remote", "add", "origin", "git@github.com:a3n-tech/shop-api.git");
 assert.equal(brainProject(d), "shop-api");
-g("remote", "set-url", "origin", "git@github.com:someone-else/shop-api.git");
-assert.equal(brainProject(d), null); // another org's repo never maps onto the team's projects/<name>/
+assert.equal(brainRepo(d), "a3n-tech/brain"); // default brain: <owner>/brain of the project repo
+// Linking is checked by the hub's `repo:` line (linkedHub), so a same-name repo elsewhere maps to a folder name only.
+assert.equal(hubRepo("---\ntype: project-hub\nrepo: a3n-tech/shop-api\n---\n# x"), "a3n-tech/shop-api");
+assert.equal(hubRepo("---\nrepo: REPLACE-WITH-OWNER/REPO-NAME\n---"), "REPLACE-WITH-OWNER/REPO-NAME");
+assert.equal(hubRepo("# no frontmatter\nrepo: a/b"), null);
 g("remote", "set-url", "origin", "https://github.com/a3n-tech/brain.git");
 assert.equal(brainProject(d), null); // the brain repo is not a project of itself
 console.log("git state ok");

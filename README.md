@@ -16,7 +16,7 @@ git needs credentials (or use an SSH key):
 
 ```bash
 gh auth login && gh auth setup-git
-claude plugin marketplace add a3n-tech/atlas
+claude plugin marketplace add a3n-tech/a3n-atlas
 claude plugin install a3ntech@a3n-tech
 ```
 
@@ -34,7 +34,7 @@ Set in `/config` or with `claude plugin configure a3ntech@a3n-tech`.
 | Option | Default | What |
 |---|---|---|
 | `handoff` | on | Session-end WIP commit, push, draft PR and handoff comment. Legacy `HARNESS_HANDOFF=off` still works. |
-| `brain_repo` | `a3n-tech/brain` | The team brain repo. |
+| `brain_repo` | `<owner>/brain` | The brain repo. Empty means `<owner>/brain` for the project repo's owner. |
 | `brain_dir` | empty | Optional: your own clone of the brain repo. |
 
 ## Token savers

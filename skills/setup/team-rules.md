@@ -1,4 +1,4 @@
-<!-- harness:team-rules:start — managed by /a3ntech:setup; edit in a3n-tech/atlas, not here -->
+<!-- harness:team-rules:start — managed by /a3ntech:setup; edit in a3n-tech/a3n-atlas, not here -->
 ## Team rules (Atlas)
 
 These apply to every person and every agent working in this repo.

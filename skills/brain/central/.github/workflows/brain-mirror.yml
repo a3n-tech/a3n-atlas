@@ -39,7 +39,6 @@ jobs:
         run: node scripts/brain-mirror.mjs
         env:
           GH_TOKEN: ${{ steps.reader.outputs.token }}
-          GITHUB_REPOSITORY_OWNER: ${{ github.repository_owner }}
       - name: Commit and push if changed
         id: push
         run: |

@@ -97,20 +97,41 @@ const opt = (k) => process.env[`CLAUDE_PLUGIN_OPTION_${k}`];
 /** Session-end handoff: on unless the person turned it off (plugin option, or legacy HARNESS_HANDOFF=off). */
 export const handoffEnabled = () => !/^(false|off|0|no)$/i.test(opt("HANDOFF") ?? "") && process.env.HARNESS_HANDOFF !== "off";
 
-// ---- Central brain: one org repo (default a3n-tech/brain), one folder per project: projects/<repo-name>/.
-export function brainRepo() {
-  const r = (opt("BRAIN_REPO") || process.env.HARNESS_BRAIN_REPO || "a3n-tech/brain").trim();
-  return /^[\w.-]+\/[\w.-]+$/.test(r) ? r : null;
+// ---- Brain: one repo of markdown (default <owner>/brain, from the project repo's owner), one folder per project.
+/** owner/name of this repo's origin on GitHub, or null. */
+export const originRepo = (root) => repoFromUrl(trySh("git", ["remote", "get-url", "origin"], { cwd: root }));
+/** The brain repo: the plugin option or env if set, otherwise <owner>/brain for the project repo's owner. */
+export function brainRepo(root) {
+  const r = (opt("BRAIN_REPO") || process.env.HARNESS_BRAIN_REPO || "").trim();
+  if (r) return /^[\w.-]+\/[\w.-]+$/.test(r) ? r : null;
+  const owner = root && originRepo(root)?.split("/")[0];
+  return owner ? `${owner}/brain` : null;
 }
 export const brainDir = () => opt("BRAIN_DIR") || process.env.HARNESS_BRAIN_DIR || join(dataDir(), "brain");
-/** Project folder name in the central brain: the GitHub repo name. Never the brain repo itself. */
+/** Folder name for this repo in the brain: the GitHub repo name. Never the brain repo itself. */
 export function brainProject(root) {
-  const repo = repoFromUrl(trySh("git", ["remote", "get-url", "origin"], { cwd: root }));
-  const [owner, name] = repo?.split("/") ?? [];
-  const brain = brainRepo();
-  // Same org as the brain only: a clone of someone-else/<name> must not read or write the team's projects/<name>/.
-  const sameOrg = brain && owner?.toLowerCase() === brain.split("/")[0].toLowerCase();
-  return sameOrg && name && /^[A-Za-z0-9._-]+$/.test(name) && !name.startsWith(".") && repo.toLowerCase() !== brain.toLowerCase() ? name : null;
+  const repo = originRepo(root);
+  const name = repo?.split("/")[1];
+  const brain = brainRepo(root);
+  return name && /^[A-Za-z0-9._-]+$/.test(name) && !name.startsWith(".") && repo.toLowerCase() !== brain?.toLowerCase() ? name : null;
+}
+/** `repo: owner/name` from a hub's frontmatter, or null. */
+export function hubRepo(text) {
+  const fm = /^---\n([\s\S]*?)\n---/.exec(text || "")?.[1] || "";
+  const m = /^repo:\s*["']?([\w.-]+\/[\w.-]+)["']?\s*$/m.exec(fm);
+  return m ? m[1] : null;
+}
+/** The project's hub text from the brain's reviewed main, only if this repo is linked there: projects/<name>/index.md
+ *  exists as a file (it only arrives through a reviewed PR) and its `repo:` is exactly this repo's owner/name. That
+ *  match is what stops a clone of someone-else/<name> from reading or writing the team's projects/<name>/. */
+export function linkedHub(root, bdir) {
+  const name = brainProject(root);
+  if (!name || !existsSync(join(bdir, ".git"))) return null;
+  const g = (...a) => trySh("git", a, { cwd: bdir, timeout: 5_000 });
+  const path = `origin/main:projects/${name}/index.md`;
+  if (g("cat-file", "-t", path) !== "blob") return null;
+  const text = g("show", path);
+  return hubRepo(text)?.toLowerCase() === originRepo(root)?.toLowerCase() ? { name, text } : null;
 }
 
 /** Model output as three delimited sections (not JSON: one raw newline in a JSON string loses the whole handoff). */

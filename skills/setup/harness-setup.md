@@ -1,8 +1,8 @@
-<!-- managed by /harness:setup (Atlas, /a3ntech:setup); edit in a3n-tech/atlas, not here -->
+<!-- managed by /harness:setup (Atlas, /a3ntech:setup); edit in a3n-tech/a3n-atlas, not here -->
 # Atlas setup and troubleshooting
 
 This repo runs **Atlas**, the a3n-tech agentic team toolkit: one shared way of planning, building and handing off
-work with Claude Code. Source and changelog: [a3n-tech/atlas](https://github.com/a3n-tech/atlas).
+work with Claude Code. Source and changelog: [a3n-tech/a3n-atlas](https://github.com/a3n-tech/a3n-atlas).
 
 - **PAUL** owns the plan: milestones and phases in `.paul/`.
 - **Engineering skills** (mattpocock) own the work: one GitHub issue → one branch → TDD → review.
@@ -11,7 +11,7 @@ work with Claude Code. Source and changelog: [a3n-tech/atlas](https://github.com
 
 ## 1. One-time setup (per person)
 
-1. Get access to the private repo `a3n-tech/atlas` (ask an org owner).
+1. Get access to the private repo `a3n-tech/a3n-atlas` (ask an org owner).
 2. Install the tools:
    ```bash
    gh auth login && gh auth setup-git   # GitHub CLI + git credentials (private marketplace)
@@ -20,7 +20,7 @@ work with Claude Code. Source and changelog: [a3n-tech/atlas](https://github.com
    ```
 3. Install Atlas (needs Claude Code 2.1.324+). `mattpocock-skills` installs with it. If you had the old `harness` plugin? Remove it first, or both sets of hooks run: `claude plugin uninstall harness@a3n-tech`.:
    ```bash
-   claude plugin marketplace add a3n-tech/atlas
+   claude plugin marketplace add a3n-tech/a3n-atlas
    claude plugin install a3ntech@a3n-tech
    ```
    (or `/plugin ...` inside Claude Code). Opening this repo does not install anything by itself.
@@ -115,7 +115,7 @@ the conflict and Claude resolves it. Planning files, code and lockfiles each hav
 
 Team rules (secrets, no AI attribution, raise everything you notice, planning stack, CI budget) are in
 `CLAUDE.md`, between the `harness:team-rules` markers. Claude loads them every session. Change
-them in `a3n-tech/atlas`, not here.
+them in `a3n-tech/a3n-atlas`, not here.
 
 ## 7. Troubleshooting
 

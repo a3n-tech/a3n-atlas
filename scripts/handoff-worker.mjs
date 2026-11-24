@@ -8,7 +8,7 @@ import { readFileSync, writeFileSync, existsSync, rmSync, copyFileSync, mkdtempS
 import { join, dirname, resolve, basename } from "node:path";
 import { tmpdir } from "node:os";
 import { sh, trySh, issueFromBranch, hasSecret, redact, claude, log, HANDOFF_MARK, isHarnessRepo, SECRET_FILE_RE, repoFromUrl,
-  gitOperationInProgress, parseSections, brainDir, brainProject, brainRepo, acquireLock } from "./lib.mjs";
+  gitOperationInProgress, parseSections, brainDir, brainProject, brainRepo, linkedHub, acquireLock } from "./lib.mjs";
 
 const payloadFile = process.argv[2];
 let input;
@@ -157,13 +157,14 @@ Diff stat:\n${diffStat}\n\nTRANSCRIPT:\n${transcript}`);
 
 function writeJournal(root, { journal, title, author, branch, issue }) {
   const project = brainProject(root);
-  const repo = brainRepo();
+  const repo = brainRepo(root);
   const bdir = brainDir();
   if (!project || !repo || !existsSync(join(bdir, ".git"))) return log(`journal skip: ${project ?? "repo"} has no brain clone yet`);
   const b = (...a) => trySh("git", a, { cwd: bdir, timeout: 60_000 });
   if (b("fetch", "-q", "origin", "main") === null) return log("journal skip: could not fetch the brain");
   // Linked = projects/<p>/index.md exists as a file on the brain's reviewed main (it only arrives through a PR).
-  if (b("cat-file", "-t", `origin/main:projects/${project}/index.md`) !== "blob") return log(`journal skip: ${project} is not linked in the brain`);
+  // Linked = the reviewed hub on the brain's main names exactly this repo (owner/name).
+  if (!linkedHub(root, bdir)) return log(`journal skip: ${project} is not linked in the brain`);
   // Never send a private project's notes to a public brain.
   const vis = trySh("gh", ["repo", "view", repo, "--json", "visibility", "-q", ".visibility"]);
   if (vis !== "PRIVATE" && vis !== "INTERNAL") return log(`journal skip: brain repo visibility ${vis ?? "unknown"}`);

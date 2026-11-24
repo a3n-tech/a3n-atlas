@@ -7,9 +7,9 @@
     "name": "a3n-tech",
     "url": "https://github.com/a3n-tech"
   },
-  "homepage": "https://github.com/a3n-tech/atlas",
-  "repository": "https://github.com/a3n-tech/atlas",
-  "license": "LicenseRef-Proprietary",
+  "homepage": "https://github.com/a3n-tech/a3n-atlas",
+  "repository": "https://github.com/a3n-tech/a3n-atlas",
+  "license": "MIT",
   "keywords": [
     "team",
     "workflow",
@@ -33,8 +33,7 @@
     "brain_repo": {
       "type": "string",
       "title": "Central brain repo",
-      "description": "owner/name of the team brain repo.",
-      "default": "a3n-tech/brain"
+      "description": "owner/name of the brain repo. Empty means <owner>/brain for the project repo's owner."
     },
     "brain_dir": {
       "type": "directory",

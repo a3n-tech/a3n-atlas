@@ -1,7 +1,7 @@
-<!-- harness:readme:start — managed by /a3ntech:setup; edit in a3n-tech/atlas, not here -->
+<!-- harness:readme:start — managed by /a3ntech:setup; edit in a3n-tech/a3n-atlas, not here -->
 ## Atlas
 
-This repo runs [Atlas](https://github.com/a3n-tech/atlas), the a3n-tech agentic team toolkit: PAUL plans milestones
+This repo runs [Atlas](https://github.com/a3n-tech/a3n-atlas), the a3n-tech agentic team toolkit: PAUL plans milestones
 and phases in `.paul/`, the engineering skills build one ticket per branch, hooks pass context between people and
 sessions, and the central brain holds team context.
 

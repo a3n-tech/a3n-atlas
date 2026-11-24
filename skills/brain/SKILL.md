@@ -56,7 +56,8 @@ Run inside the project repo. The project name is the GitHub repo name from `orig
    git -C "$BRAIN" worktree add -b link/<repo> /tmp/brain-link-<repo> origin/main
    cp -R "$BRAIN/project-template/." /tmp/brain-link-<repo>/projects/<repo>/
    ```
-   Replace `REPLACE-WITH-REPO-NAME` in `projects/<repo>/index.md`, write one or two sentences on the project,
+   In `projects/<repo>/index.md` set `repo: <owner>/<repo>` exactly (Atlas only treats the project as linked when
+   this matches the repo's origin), replace `REPLACE-WITH-REPO-NAME`, write one or two sentences on the project,
    and add the project to the root `index.md` Projects list. Commit `chore: link <repo>`, push, `gh pr create`
    in `a3n-tech/brain`, then `git -C "$BRAIN" worktree remove /tmp/brain-link-<repo>`.
 3. In the project repo: remove any `brain/** merge=paul-ai` line from `.gitattributes`; delete
